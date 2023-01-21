@@ -19,6 +19,9 @@ type Tree interface {
 	Address() (Address, error)
 	ErgoTreeTemplateBytesLength() (int, error)
 	ErgoTreeTemplateHash() (string, error)
+	ErgoTreeConstantsLength() (int, error)
+	ErgoTreeGetConstant(index int) (Constant, error)
+	ErgoTreeGetConstants() ([]Constant, error)
 }
 
 type tree struct {
@@ -110,6 +113,51 @@ func (t *tree) ErgoTreeTemplateHash() (string, error) {
 
 	hash := sha256.Sum256(result[:])
 	return hex.EncodeToString(hash[:]), nil
+}
+
+func (t *tree) ErgoTreeConstantsLength() (int, error) {
+	var returnNum C.ReturnNum_usize
+	returnNum = C.ergo_lib_ergo_tree_constants_len(t.p)
+	err := newError(returnNum.error)
+
+	if err.isError() {
+		return 0, err.error()
+	}
+	length := C.ulong(returnNum.value)
+
+	return int(length), nil
+}
+
+func (t *tree) ErgoTreeGetConstant(index int) (Constant, error) {
+	var constantOut C.ConstantPtr
+	var returnOption C.ReturnOption
+
+	indexNumber := C.ulong(index)
+
+	returnOption = C.ergo_lib_ergo_tree_get_constant(t.p, indexNumber, &constantOut)
+	err := newError(returnOption.error)
+
+	if err.isError() {
+		return &constant{}, err.error()
+	}
+
+	return &constant{p: constantOut}, nil
+}
+
+func (t *tree) ErgoTreeGetConstants() ([]Constant, error) {
+	length, err := t.ErgoTreeConstantsLength()
+	if err != nil {
+		return nil, err
+	}
+	var constants []Constant
+	for i := 0; i < length; i++ {
+		ergoTreeConstant, constErr := t.ErgoTreeGetConstant(i)
+		if constErr != nil {
+			return nil, constErr
+		}
+		constants = append(constants, ergoTreeConstant)
+	}
+	return constants, nil
 }
 
 func finalizeTree(t *tree) {
