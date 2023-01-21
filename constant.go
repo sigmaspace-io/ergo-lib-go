@@ -6,12 +6,14 @@ package ergo
 import "C"
 import (
 	"runtime"
+	"strings"
 	"unsafe"
 )
 
 type Constant interface {
 	Base16() (string, error)
 	ConstantType() (string, error)
+	ConstantValue() (string, error)
 }
 
 type constant struct {
@@ -50,7 +52,7 @@ func (c *constant) Base16() (string, error) {
 	err := newError(errPtr)
 
 	if err.isError() {
-		return "", nil
+		return "", err.error()
 	}
 
 	return C.GoString(constantStr), nil
@@ -64,10 +66,24 @@ func (c *constant) ConstantType() (string, error) {
 	err := newError(errPtr)
 
 	if err.isError() {
-		return "", nil
+		return "", err.error()
 	}
 
 	return C.GoString(constantTypeStr), nil
+}
+
+func (c *constant) ConstantValue() (string, error) {
+	var constantValueStr *C.char
+	defer C.free(unsafe.Pointer(constantValueStr))
+
+	errPtr := C.ergo_lib_constant_value_to_dbg_str(c.p, &constantValueStr)
+	err := newError(errPtr)
+
+	if err.isError() {
+		return "", err.error()
+	}
+
+	return strings.ReplaceAll(C.GoString(constantValueStr), " ", ""), nil
 }
 
 func finalizeConstant(c *constant) {

@@ -36,3 +36,11 @@ func TestConstant_ConstantType(t *testing.T) {
 
 	assert.Equal(t, "SColl(SInt)", costType)
 }
+
+func TestConstant_ConstantValue(t *testing.T) {
+	con, _ := NewConstant("100204a00b")
+
+	constValue, _ := con.ConstantValue()
+
+	assert.Equal(t, "[2,720]", constValue)
+}
