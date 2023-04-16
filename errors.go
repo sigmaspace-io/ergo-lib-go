@@ -33,6 +33,7 @@ func (e ergoError) isError() bool {
 
 func (e ergoError) error() error {
 	cStr := C.ergo_lib_error_to_string(e.p)
+	defer C.free(unsafe.Pointer(cStr))
 	s := C.GoString(cStr)
 
 	if s == nilErrorStr {
