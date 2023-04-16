@@ -141,7 +141,9 @@ func (t *tree) ErgoTreeGetConstant(index int) (Constant, error) {
 		return &constant{}, err.error()
 	}
 
-	return newConstant(&constant{p: constantOut}), nil
+	c := &constant{p: constantOut}
+
+	return newConstant(c), nil
 }
 
 func (t *tree) ErgoTreeGetConstants() ([]Constant, error) {
