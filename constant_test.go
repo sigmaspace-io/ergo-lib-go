@@ -56,5 +56,5 @@ func TestNewConstant_TupleExpression(t *testing.T) {
 
 	assert.Nil(t, err)
 	constValue, _ := con.ConstantValue()
-	assert.Equal(t, "[102,99]", constValue)
+	assert.Equal(t, "BoundedVec{inner:[102,99]}", constValue)
 }
