@@ -99,10 +99,10 @@ func (t *tree) ErgoTreeTemplateHash() (string, error) {
 		return "", byteErr
 	}
 
-	output := (*C.uint8_t)(C.malloc(C.ulong(bytesLength)))
+	output := C.malloc(C.ulong(bytesLength))
 	defer C.free(unsafe.Pointer(output))
 
-	errPtr := C.ergo_lib_ergo_tree_template_bytes(t.p, output)
+	errPtr := C.ergo_lib_ergo_tree_template_bytes(t.p, (*C.uint8_t)(output))
 	err := newError(errPtr)
 
 	if err.isError() {

@@ -44,3 +44,17 @@ func TestConstant_ConstantValue(t *testing.T) {
 
 	assert.Equal(t, "[2,720]", constValue)
 }
+
+func TestNewConstant_Invalid(t *testing.T) {
+	_, err := NewConstant("0402,")
+
+	assert.Error(t, err)
+}
+
+func TestNewConstant_TupleExpression(t *testing.T) {
+	con, err := NewConstant("860202660263")
+
+	assert.Nil(t, err)
+	constValue, _ := con.ConstantValue()
+	assert.Equal(t, "[102,99]", constValue)
+}
