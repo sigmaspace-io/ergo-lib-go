@@ -1,7 +1,7 @@
 package ergo
 
 /*
-   #include "ergo_lib.h"
+   #include "ergo.h"
 */
 import "C"
 import (
