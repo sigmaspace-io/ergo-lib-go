@@ -7,7 +7,6 @@ import "C"
 import (
 	"errors"
 	"runtime"
-	"unsafe"
 )
 
 // nilErrorStr is the value C.ergo_lib_error_to_string() returns
@@ -33,7 +32,7 @@ func (e ergoError) isError() bool {
 
 func (e ergoError) error() error {
 	cStr := C.ergo_lib_error_to_string(e.p)
-	defer C.free(unsafe.Pointer(cStr))
+	defer C.ergo_lib_delete_string(cStr)
 	s := C.GoString(cStr)
 
 	if s == nilErrorStr {
@@ -44,5 +43,5 @@ func (e ergoError) error() error {
 }
 
 func finalizeError(e *ergoError) {
-	C.free(unsafe.Pointer(e.p))
+	C.ergo_lib_delete_error(e.p)
 }
