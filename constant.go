@@ -46,9 +46,9 @@ func NewConstant(s string) (Constant, error) {
 
 func (c *constant) Base16() (string, error) {
 	var constantStr *C.char
-	defer C.ergo_lib_delete_string(constantStr)
 
 	errPtr := C.ergo_lib_constant_to_base16(c.p, &constantStr)
+	defer C.ergo_lib_delete_string(constantStr)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -60,9 +60,9 @@ func (c *constant) Base16() (string, error) {
 
 func (c *constant) ConstantType() (string, error) {
 	var constantTypeStr *C.char
-	defer C.ergo_lib_delete_string(constantTypeStr)
 
 	errPtr := C.ergo_lib_constant_type_to_dbg_str(c.p, &constantTypeStr)
+	defer C.ergo_lib_delete_string(constantTypeStr)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -74,9 +74,9 @@ func (c *constant) ConstantType() (string, error) {
 
 func (c *constant) ConstantValue() (string, error) {
 	var constantValueStr *C.char
-	defer C.ergo_lib_delete_string(constantValueStr)
 
 	errPtr := C.ergo_lib_constant_value_to_dbg_str(c.p, &constantValueStr)
+	defer C.ergo_lib_delete_string(constantValueStr)
 	err := newError(errPtr)
 
 	if err.isError() {

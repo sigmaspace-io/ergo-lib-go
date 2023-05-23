@@ -69,10 +69,10 @@ func NewAddress(s string) (Address, error) {
 
 func (a *address) Base58(prefix networkPrefix) string {
 	var outAddrStr *C.char
-	defer C.ergo_lib_delete_string(outAddrStr)
 	cPrefix := C.uchar(prefix)
 
 	C.ergo_lib_address_to_base58(a.p, cPrefix, &outAddrStr)
+	defer C.ergo_lib_delete_string(outAddrStr)
 
 	return C.GoString(outAddrStr)
 }

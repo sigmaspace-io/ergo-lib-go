@@ -51,9 +51,9 @@ func NewTree(s string) (Tree, error) {
 
 func (t *tree) Base16() (*string, error) {
 	var outStr *C.char
-	defer C.ergo_lib_delete_string(outStr)
 
 	errPtr := C.ergo_lib_ergo_tree_to_base16_bytes(t.p, &outStr)
+	defer C.ergo_lib_delete_string(outStr)
 	err := newError(errPtr)
 
 	if err.isError() {

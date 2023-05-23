@@ -44,9 +44,9 @@ func NewBoxId(s string) (BoxId, error) {
 
 func (b *boxId) Base16() string {
 	var boxIdStr *C.char
-	defer C.ergo_lib_delete_string(boxIdStr)
 
 	C.ergo_lib_box_id_to_str(b.p, &boxIdStr)
+	defer C.ergo_lib_delete_string(boxIdStr)
 
 	return C.GoString(boxIdStr)
 }
