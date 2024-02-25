@@ -22,9 +22,9 @@ const (
 type addressTypePrefix uint8
 
 const (
-	P2PkPrefix addressTypePrefix = 1
-	Pay2ShPrefix
-	Pay2SPrefix
+	P2PkPrefix   addressTypePrefix = 1
+	Pay2ShPrefix addressTypePrefix = 2
+	Pay2SPrefix  addressTypePrefix = 3
 )
 
 type Address interface {
@@ -36,6 +36,7 @@ type Address interface {
 	// 0x02 - Pay-to-Script-Hash(P2SH).
 	// 0x03 - Pay-to-Script(P2S).
 	TypePrefix() addressTypePrefix
+	pointer() C.AddressPtr
 }
 
 type address struct {
@@ -81,6 +82,10 @@ func (a *address) TypePrefix() addressTypePrefix {
 	prefix := C.ergo_lib_address_type_prefix(a.p)
 
 	return addressTypePrefix(prefix)
+}
+
+func (a *address) pointer() C.AddressPtr {
+	return a.p
 }
 
 func finalizeAddress(a *address) {

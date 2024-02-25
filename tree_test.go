@@ -21,7 +21,7 @@ func TestTree_Base16(t *testing.T) {
 	tree, _ := NewTree("0008cd0336100ef59ced80ba5f89c4178ebd57b6c1dd0f3d135ee1db9f62fc634d637041")
 	s, _ := tree.Base16()
 
-	assert.Equal(t, "0008cd0336100ef59ced80ba5f89c4178ebd57b6c1dd0f3d135ee1db9f62fc634d637041", *s)
+	assert.Equal(t, "0008cd0336100ef59ced80ba5f89c4178ebd57b6c1dd0f3d135ee1db9f62fc634d637041", s)
 }
 
 func TestTree_Address(t *testing.T) {

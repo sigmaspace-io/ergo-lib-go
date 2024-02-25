@@ -13,7 +13,7 @@ import (
 
 type Tree interface {
 	// Base16 converts the Tree to a base16 encoded string.
-	Base16() (*string, error)
+	Base16() (string, error)
 
 	// Address converts the Tree to an Address.
 	Address() (Address, error)
@@ -22,10 +22,16 @@ type Tree interface {
 	ErgoTreeConstantsLength() (int, error)
 	ErgoTreeGetConstant(index int) (Constant, error)
 	ErgoTreeGetConstants() ([]Constant, error)
+	pointer() C.ErgoTreePtr
 }
 
 type tree struct {
 	p C.ErgoTreePtr
+}
+
+func newTree(t *tree) Tree {
+	runtime.SetFinalizer(t, finalizeTree)
+	return t
 }
 
 // NewTree creates a new ergo tree from the supplied base16 string.
@@ -44,12 +50,10 @@ func NewTree(s string) (Tree, error) {
 
 	t := &tree{p}
 
-	runtime.SetFinalizer(t, finalizeTree)
-
-	return t, nil
+	return newTree(t), nil
 }
 
-func (t *tree) Base16() (*string, error) {
+func (t *tree) Base16() (string, error) {
 	var outStr *C.char
 
 	errPtr := C.ergo_lib_ergo_tree_to_base16_bytes(t.p, &outStr)
@@ -57,12 +61,12 @@ func (t *tree) Base16() (*string, error) {
 	err := newError(errPtr)
 
 	if err.isError() {
-		return nil, err.error()
+		return "", err.error()
 	}
 
 	result := C.GoString(outStr)
 
-	return &result, nil
+	return result, nil
 }
 
 func (t *tree) Address() (Address, error) {
@@ -160,6 +164,10 @@ func (t *tree) ErgoTreeGetConstants() ([]Constant, error) {
 		constants = append(constants, ergoTreeConstant)
 	}
 	return constants, nil
+}
+
+func (t *tree) pointer() C.ErgoTreePtr {
+	return t.p
 }
 
 func finalizeTree(t *tree) {
