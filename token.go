@@ -9,7 +9,9 @@ import (
 	"unsafe"
 )
 
+// TokenId (32-byte digest)
 type TokenId interface {
+	// Base16 returns the TokenId as base16 encoded string
 	Base16() string
 	pointer() C.TokenIdPtr
 }
@@ -61,7 +63,9 @@ func (t *tokenId) pointer() C.TokenIdPtr {
 	return t.p
 }
 
+// TokenAmount is token amount with bound checks
 type TokenAmount interface {
+	// Int64 converts TokenAmount to int64
 	Int64() int64
 	pointer() C.TokenAmountPtr
 }
@@ -91,7 +95,6 @@ func NewTokenAmount(amount int64) (TokenAmount, error) {
 	return newTokenAmount(t), nil
 }
 
-// Int64 converts TokenAmount to int64
 func (t *tokenAmount) Int64() int64 {
 	amount := C.ergo_lib_token_amount_as_i64(t.p)
 	return int64(amount)
@@ -105,9 +108,13 @@ func finalizeTokenAmount(t *tokenAmount) {
 	C.ergo_lib_token_amount_delete(t.p)
 }
 
+// Token represented with TokenId paired with its TokenAmount
 type Token interface {
+	// Id returns TokenId of the Token
 	Id() TokenId
+	// Amount returns TokenAmount of the Token
 	Amount() TokenAmount
+	// JsonEIP12 returns json representation of Token as string according to EIP-12 https://github.com/ergoplatform/eips/pull/23
 	JsonEIP12() (string, error)
 	pointer() C.TokenPtr
 }
@@ -121,6 +128,7 @@ func newToken(t *token) Token {
 	return t
 }
 
+// NewToken creates Token from provided TokenId and TokenAmount
 func NewToken(tokenId TokenId, tokenAmount TokenAmount) Token {
 	var p C.TokenPtr
 
@@ -173,9 +181,13 @@ func finalizeToken(t *token) {
 	C.ergo_lib_token_delete(t.p)
 }
 
+// Tokens an ordered collection of Token
 type Tokens interface {
+	// Len returns the length of the collection
 	Len() int
+	// Get returns the Token at the provided index if it exists
 	Get(index int) (Token, error)
+	// Add adds provided Token to the end of the collection
 	Add(token Token)
 	pointer() C.TokensPtr
 }
@@ -189,6 +201,7 @@ func newTokens(t *tokens) Tokens {
 	return t
 }
 
+// NewTokens creates an empty Tokens collection
 func NewTokens() Tokens {
 	var p C.TokensPtr
 	C.ergo_lib_tokens_new(&p)

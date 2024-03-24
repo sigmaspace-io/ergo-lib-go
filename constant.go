@@ -10,10 +10,14 @@ import (
 	"unsafe"
 )
 
+// Constant represents Ergo constant(evaluated) values
 type Constant interface {
+	// Base16 encode as Base16-encoded ErgoTree serialized value or throw an error if serialization failed
 	Base16() (string, error)
-	ConstantType() (string, error)
-	ConstantValue() (string, error)
+	// Type returns the Constant type as string
+	Type() (string, error)
+	// Value returns the Constant value as string
+	Value() (string, error)
 }
 
 type constant struct {
@@ -22,10 +26,10 @@ type constant struct {
 
 func newConstant(c *constant) Constant {
 	runtime.SetFinalizer(c, finalizeConstant)
-
 	return c
 }
 
+// NewConstant creates a new Constant from Base16-encoded ErgoTree serialized value
 func NewConstant(s string) (Constant, error) {
 	base16ErgoTree := C.CString(s)
 	defer C.free(unsafe.Pointer(base16ErgoTree))
@@ -58,7 +62,7 @@ func (c *constant) Base16() (string, error) {
 	return C.GoString(constantStr), nil
 }
 
-func (c *constant) ConstantType() (string, error) {
+func (c *constant) Type() (string, error) {
 	var constantTypeStr *C.char
 
 	errPtr := C.ergo_lib_constant_type_to_dbg_str(c.p, &constantTypeStr)
@@ -72,7 +76,7 @@ func (c *constant) ConstantType() (string, error) {
 	return C.GoString(constantTypeStr), nil
 }
 
-func (c *constant) ConstantValue() (string, error) {
+func (c *constant) Value() (string, error) {
 	var constantValueStr *C.char
 
 	errPtr := C.ergo_lib_constant_value_to_dbg_str(c.p, &constantValueStr)

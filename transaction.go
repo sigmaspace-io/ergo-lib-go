@@ -9,8 +9,10 @@ import (
 	"unsafe"
 )
 
+// TxId represents transaction id
 type TxId interface {
-	ToString() (string, error)
+	// String returns TxId as string
+	String() (string, error)
 	pointer() C.TxIdPtr
 }
 
@@ -23,6 +25,7 @@ func newTxId(t *txId) TxId {
 	return t
 }
 
+// NewTxId creates TxId from hex-encoded string
 func NewTxId(s string) (TxId, error) {
 	txIdStr := C.CString(s)
 	defer C.free(unsafe.Pointer(txIdStr))
@@ -41,7 +44,7 @@ func NewTxId(s string) (TxId, error) {
 	return newTxId(t), nil
 }
 
-func (t *txId) ToString() (string, error) {
+func (t *txId) String() (string, error) {
 	var outTxIdStr *C.char
 
 	errPtr := C.ergo_lib_tx_id_to_str(t.p, &outTxIdStr)

@@ -24,7 +24,7 @@ func TestConstantCollByte_Base16(t *testing.T) {
 func TestConstant_ConstantTypeSint(t *testing.T) {
 	con, _ := NewConstant("0402")
 
-	constType, _ := con.ConstantType()
+	constType, _ := con.Type()
 
 	assert.Equal(t, "SInt", constType)
 }
@@ -32,7 +32,7 @@ func TestConstant_ConstantTypeSint(t *testing.T) {
 func TestConstant_ConstantType(t *testing.T) {
 	con, _ := NewConstant("100102")
 
-	costType, _ := con.ConstantType()
+	costType, _ := con.Type()
 
 	assert.Equal(t, "SColl(SInt)", costType)
 }
@@ -40,7 +40,7 @@ func TestConstant_ConstantType(t *testing.T) {
 func TestConstant_ConstantValue(t *testing.T) {
 	con, _ := NewConstant("100204a00b")
 
-	constValue, _ := con.ConstantValue()
+	constValue, _ := con.Value()
 
 	assert.Equal(t, "[2,720]", constValue)
 }
@@ -55,6 +55,6 @@ func TestNewConstant_TupleExpression(t *testing.T) {
 	con, err := NewConstant("860202660263")
 
 	assert.Nil(t, err)
-	constValue, _ := con.ConstantValue()
+	constValue, _ := con.Value()
 	assert.Equal(t, "BoundedVec{inner:[102,99]}", constValue)
 }

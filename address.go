@@ -12,26 +12,29 @@ import (
 type networkPrefix uint8
 
 const (
-	// MainnetPrefix is the network prefix used in mainnet address encoding.
+	// MainnetPrefix is the network prefix used in mainnet address encoding
 	MainnetPrefix networkPrefix = 0
 
-	// TestnetPrefix is the network prefix used in testnet address encoding.
+	// TestnetPrefix is the network prefix used in testnet address encoding
 	TestnetPrefix = 16
 )
 
 type addressTypePrefix uint8
 
 const (
-	P2PkPrefix   addressTypePrefix = 1
+	// P2PkPrefix 0x01 - Pay-to-PublicKey(P2PK) address
+	P2PkPrefix addressTypePrefix = 1
+	// Pay2ShPrefix 0x02 - Pay-to-Script-Hash(P2SH)
 	Pay2ShPrefix addressTypePrefix = 2
-	Pay2SPrefix  addressTypePrefix = 3
+	// Pay2SPrefix 0x03 - Pay-to-Script(P2S)
+	Pay2SPrefix addressTypePrefix = 3
 )
 
 type Address interface {
 	// Base58 converts an Address to a base58 string using the provided networkPrefix.
 	Base58(prefix networkPrefix) string
 
-	// TypePrefix returns the networkPrefix for the address.
+	// TypePrefix returns the addressTypePrefix for the Address.
 	// 0x01 - Pay-to-PublicKey(P2PK) address.
 	// 0x02 - Pay-to-Script-Hash(P2SH).
 	// 0x03 - Pay-to-Script(P2S).

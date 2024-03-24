@@ -44,10 +44,10 @@ func TestNewBox(t *testing.T) {
 	testErgoBox, boxErr := NewBox(testBoxValue, testCreationHeight, testContract, testTxId, 1, testTokens)
 
 	assert.Nil(t, boxErr)
-	assert.Equal(t, testCreationHeight, testErgoBox.GetCreationHeight())
-	assert.Equal(t, testBoxId, testErgoBox.GetBoxId())
-	assert.Equal(t, testBoxValue, testErgoBox.GetBoxValue())
-	assert.Equal(t, testErgoTree, testErgoBox.GetTree())
+	assert.Equal(t, testCreationHeight, testErgoBox.CreationHeight())
+	assert.Equal(t, testBoxId, testErgoBox.BoxId())
+	assert.Equal(t, testBoxValue, testErgoBox.BoxValue())
+	assert.Equal(t, testErgoTree, testErgoBox.Tree())
 }
 
 func TestNewBoxFromJson(t *testing.T) {
@@ -68,8 +68,8 @@ func TestNewBoxFromJson(t *testing.T) {
 	testErgoBox, boxErr := NewBoxFromJson(json)
 
 	assert.Nil(t, boxErr)
-	assert.Equal(t, uint32(284761), testErgoBox.GetCreationHeight())
-	assert.Equal(t, testBoxId, testErgoBox.GetBoxId())
-	assert.Equal(t, testBoxValue, testErgoBox.GetBoxValue())
-	assert.Equal(t, testErgoTree, testErgoBox.GetTree())
+	assert.Equal(t, uint32(284761), testErgoBox.CreationHeight())
+	assert.Equal(t, testBoxId, testErgoBox.BoxId())
+	assert.Equal(t, testBoxValue, testErgoBox.BoxValue())
+	assert.Equal(t, testErgoTree, testErgoBox.Tree())
 }

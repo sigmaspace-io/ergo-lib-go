@@ -9,8 +9,11 @@ import (
 	"unsafe"
 )
 
+// MnemonicGenerator generates new mnemonic seed phrases
 type MnemonicGenerator interface {
+	// Generate a new mnemonic sentence using random entropy
 	Generate() (string, error)
+	// GenerateFromEntropy generates a new mnemonic sentence using provided entropy
 	GenerateFromEntropy(entropy []byte) (string, error)
 }
 
@@ -18,6 +21,7 @@ type mnemonicGenerator struct {
 	p C.MnemonicGeneratorPtr
 }
 
+// NewMnemonicGenerator creates a new MnemonicGenerator based on supplied language and strength
 func NewMnemonicGenerator(language string, strength uint32) (MnemonicGenerator, error) {
 	languageStr := C.CString(language)
 	defer C.free(unsafe.Pointer(languageStr))
@@ -81,6 +85,7 @@ type wallet struct {
 	p C.WalletPtr
 }
 
+// NewWallet creates a Wallet instance loading secret key from mnemonic or throws error if a DlogSecretKey cannot be parsed from the provided phrase
 func NewWallet(mnemonicPhrase string, mnemonicPassword string) (Wallet, error) {
 	mnemonic := C.CString(mnemonicPhrase)
 	defer C.free(unsafe.Pointer(mnemonic))

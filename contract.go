@@ -9,8 +9,10 @@ import (
 	"unsafe"
 )
 
+// Contract defines the contract(script) that will be guarding box contents
 type Contract interface {
-	ErgoTree() Tree
+	// Tree returns the ergo Tree of the Contract
+	Tree() Tree
 	pointer() C.ContractPtr
 }
 
@@ -23,6 +25,7 @@ func newContract(c *contract) Contract {
 	return c
 }
 
+// NewContractFromTree creates a new Contract from ergo Tree
 func NewContractFromTree(ergoTree Tree) Contract {
 	var p C.ContractPtr
 	C.ergo_lib_contract_new(ergoTree.pointer(), &p)
@@ -32,6 +35,7 @@ func NewContractFromTree(ergoTree Tree) Contract {
 	return newContract(c)
 }
 
+// NewContractCompileFromString compiles a contract from ErgoScript source code
 func NewContractCompileFromString(compileFromString string) (Contract, error) {
 	contractStr := C.CString(compileFromString)
 	defer C.free(unsafe.Pointer(contractStr))
@@ -48,6 +52,7 @@ func NewContractCompileFromString(compileFromString string) (Contract, error) {
 	return newContract(c), nil
 }
 
+// NewContractPayToAddress creates a new Contract that allows spending of the guarded box by a given recipient (Address)
 func NewContractPayToAddress(payToAddress Address) (Contract, error) {
 	var p C.ContractPtr
 	errPtr := C.ergo_lib_contract_pay_to_address(payToAddress.pointer(), &p)
@@ -61,7 +66,7 @@ func NewContractPayToAddress(payToAddress Address) (Contract, error) {
 	return newContract(c), nil
 }
 
-func (c *contract) ErgoTree() Tree {
+func (c *contract) Tree() Tree {
 	var ergoTreePtr C.ErgoTreePtr
 	C.ergo_lib_contract_ergo_tree(c.p, &ergoTreePtr)
 
