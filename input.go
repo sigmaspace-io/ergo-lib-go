@@ -76,7 +76,7 @@ func newInput(i *input) Input {
 func (i *input) BoxId() BoxId {
 	var p C.BoxIdPtr
 
-	C.ergo_lib_unsigned_input_box_id(i.p, &p)
+	C.ergo_lib_input_box_id(i.p, &p)
 
 	bi := &boxId{p: p}
 
@@ -121,7 +121,7 @@ func newProverResult(pr *proverResult) ProverResult {
 }
 
 func (pr *proverResult) Bytes() []byte {
-	proofLength := C.ergo_lib_context_extension_len(pr.p)
+	proofLength := C.ergo_lib_prover_result_proof_len(pr.p)
 
 	output := C.malloc(C.ulong(proofLength))
 	defer C.free(unsafe.Pointer(output))
@@ -257,7 +257,7 @@ func (i *inputs) Len() uint32 {
 }
 
 func (i *inputs) Get(index uint32) (Input, error) {
-	var p C.UnsignedInputPtr
+	var p C.InputPtr
 
 	res := C.ergo_lib_inputs_get(i.p, C.ulong(index), &p)
 	err := newError(res.error)
