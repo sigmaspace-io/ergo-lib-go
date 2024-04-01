@@ -111,6 +111,7 @@ type BlockHeaders interface {
 	Get(index uint32) (BlockHeader, error)
 	// Add adds provided BlockHeader to the end of the collection
 	Add(blockHeader BlockHeader)
+	pointer() C.BlockHeadersPtr
 }
 
 type blockHeaders struct {
@@ -155,6 +156,10 @@ func (b *blockHeaders) Get(index uint32) (BlockHeader, error) {
 
 func (b *blockHeaders) Add(blockHeader BlockHeader) {
 	C.ergo_lib_block_headers_add(blockHeader.pointer(), b.p)
+}
+
+func (b *blockHeaders) pointer() C.BlockHeadersPtr {
+	return b.p
 }
 
 func finalizeBlockHeaders(b *blockHeaders) {
