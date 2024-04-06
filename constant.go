@@ -18,6 +18,7 @@ type Constant interface {
 	Type() (string, error)
 	// Value returns the Constant value as string
 	Value() (string, error)
+	pointer() C.ConstantPtr
 }
 
 type constant struct {
@@ -88,6 +89,10 @@ func (c *constant) Value() (string, error) {
 	}
 
 	return strings.ReplaceAll(C.GoString(constantValueStr), " ", ""), nil
+}
+
+func (c *constant) pointer() C.ConstantPtr {
+	return c.p
 }
 
 func finalizeConstant(c *constant) {
