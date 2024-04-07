@@ -30,6 +30,7 @@ const (
 type BoxId interface {
 	// Base16 returns the BoxId as base16 encoded string
 	Base16() string
+	pointer() C.BoxIdPtr
 }
 
 type boxId struct {
@@ -67,6 +68,10 @@ func (b *boxId) Base16() string {
 	defer C.ergo_lib_delete_string(boxIdStr)
 
 	return C.GoString(boxIdStr)
+}
+
+func (b *boxId) pointer() C.BoxIdPtr {
+	return b.p
 }
 
 func finalizeBoxId(b *boxId) {
@@ -581,6 +586,7 @@ type Boxes interface {
 	Get(index uint32) (Box, error)
 	// Add adds provided Box to the end of the collection
 	Add(box Box)
+	pointer() C.ErgoBoxesPtr
 }
 
 type boxes struct {
@@ -626,6 +632,10 @@ func (b *boxes) Get(index uint32) (Box, error) {
 
 func (b *boxes) Add(box Box) {
 	C.ergo_lib_ergo_boxes_add(box.pointer(), b.p)
+}
+
+func (b *boxes) pointer() C.ErgoBoxesPtr {
+	return b.p
 }
 
 func finalizeBoxes(b *boxes) {

@@ -8,6 +8,7 @@ import "runtime"
 
 // StateContext represents blockchain state (last headers, etc.)
 type StateContext interface {
+	pointer() C.ErgoStateContextPtr
 }
 
 type stateContext struct {
@@ -33,6 +34,10 @@ func NewStateContext(preHeader PreHeader, headers BlockHeaders) (StateContext, e
 	st := &stateContext{p: p}
 
 	return newStateContext(st), nil
+}
+
+func (s *stateContext) pointer() C.ErgoStateContextPtr {
+	return s.p
 }
 
 func finalizeStateContext(s *stateContext) {
