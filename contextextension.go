@@ -13,6 +13,7 @@ import (
 type ContextExtension interface {
 	// Keys returns all keys in the map
 	Keys() []byte
+	pointer() C.ContextExtensionPtr
 }
 
 type contextExtension struct {
@@ -35,6 +36,10 @@ func (c *contextExtension) Keys() []byte {
 	result := C.GoBytes(unsafe.Pointer(output), C.int(bytesLength))
 
 	return result
+}
+
+func (c *contextExtension) pointer() C.ContextExtensionPtr {
+	return c.p
 }
 
 func finalizeContextExtension(c *contextExtension) {

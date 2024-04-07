@@ -53,6 +53,7 @@ type DataInputs interface {
 	Get(index uint32) (DataInput, error)
 	// Add adds provided DataInput to the end of the collection
 	Add(dataInput DataInput)
+	pointer() C.DataInputsPtr
 }
 
 type dataInputs struct {
@@ -96,6 +97,10 @@ func (d *dataInputs) Get(index uint32) (DataInput, error) {
 
 func (d *dataInputs) Add(dataInput DataInput) {
 	C.ergo_lib_data_inputs_add(dataInput.pointer(), d.p)
+}
+
+func (d *dataInputs) pointer() C.DataInputsPtr {
+	return d.p
 }
 
 func finalizeDataInputs(d *dataInputs) {

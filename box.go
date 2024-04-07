@@ -468,6 +468,7 @@ type BoxAssetsDataList interface {
 	Get(index uint32) (BoxAssetsData, error)
 	// Add adds provided BoxAssetsData to the end of the collection
 	Add(boxAssetsData BoxAssetsData)
+	pointer() C.ErgoBoxAssetsDataListPtr
 }
 
 type boxAssetsDataList struct {
@@ -515,6 +516,10 @@ func (b *boxAssetsDataList) Add(boxAssetsData BoxAssetsData) {
 	C.ergo_lib_ergo_box_assets_data_list_add(boxAssetsData.pointer(), b.p)
 }
 
+func (b *boxAssetsDataList) pointer() C.ErgoBoxAssetsDataListPtr {
+	return b.p
+}
+
 func finalizeBoxAssetsDataList(b *boxAssetsDataList) {
 	C.ergo_lib_ergo_box_assets_data_list_delete(b.p)
 }
@@ -527,6 +532,7 @@ type BoxCandidates interface {
 	Get(index uint32) (BoxCandidate, error)
 	// Add adds provided BoxCandidate to the end of the collection
 	Add(boxCandidate BoxCandidate)
+	pointer() C.ErgoBoxCandidatesPtr
 }
 
 type boxCandidates struct {
@@ -572,6 +578,10 @@ func (b *boxCandidates) Get(index uint32) (BoxCandidate, error) {
 
 func (b *boxCandidates) Add(boxCandidate BoxCandidate) {
 	C.ergo_lib_ergo_box_candidates_add(boxCandidate.pointer(), b.p)
+}
+
+func (b *boxCandidates) pointer() C.ErgoBoxCandidatesPtr {
+	return b.p
 }
 
 func finalizeBoxCandidates(b *boxCandidates) {
