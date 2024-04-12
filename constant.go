@@ -52,7 +52,7 @@ func NewConstant(s string) (Constant, error) {
 // NewConstantFromInt32 creates a new Constant from int32 value
 func NewConstantFromInt32(i int32) Constant {
 	var p C.ConstantPtr
-	C.ergo_lib_constant_from_i32(C.int(i), &p)
+	C.ergo_lib_constant_from_i32(C.int32_t(i), &p)
 	c := &constant{p}
 	return newConstant(c)
 }
@@ -60,7 +60,7 @@ func NewConstantFromInt32(i int32) Constant {
 // NewConstantFromInt64 creates a new Constant from int64 value
 func NewConstantFromInt64(i int64) Constant {
 	var p C.ConstantPtr
-	C.ergo_lib_constant_from_i64(C.longlong(i), &p)
+	C.ergo_lib_constant_from_i64(C.int64_t(i), &p)
 	c := &constant{p}
 	return newConstant(c)
 }
