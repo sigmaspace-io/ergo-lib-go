@@ -44,6 +44,14 @@ func NewTokenId(s string) (TokenId, error) {
 	return newTokenId(t), nil
 }
 
+// NewTokenIdFromBoxId creates a TokenId from ergo box id (32 byte digest)
+func NewTokenIdFromBoxId(boxId BoxId) TokenId {
+	var p C.TokenIdPtr
+	C.ergo_lib_token_id_from_box_id(boxId.pointer(), &p)
+	t := &tokenId{p: p}
+	return newTokenId(t)
+}
+
 func finalizeTokenId(t *tokenId) {
 	C.ergo_lib_token_id_delete(t.p)
 }

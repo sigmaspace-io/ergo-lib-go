@@ -19,6 +19,7 @@ import (
 type ReducedTransaction interface {
 	// UnsignedTransaction returns the UnsignedTransaction
 	UnsignedTransaction() UnsignedTransaction
+	pointer() C.ReducedTransactionPtr
 }
 
 type reducedTransaction struct {
@@ -51,6 +52,10 @@ func (r *reducedTransaction) UnsignedTransaction() UnsignedTransaction {
 	C.ergo_lib_reduced_tx_unsigned_tx(r.p, &p)
 	ut := &unsignedTransaction{p: p}
 	return newUnsignedTransaction(ut)
+}
+
+func (r *reducedTransaction) pointer() C.ReducedTransactionPtr {
+	return r.p
 }
 
 func finalizeReducedTransaction(r *reducedTransaction) {

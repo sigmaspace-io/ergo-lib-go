@@ -156,6 +156,7 @@ type TransactionHintsBag interface {
 	AddHintsForInput(index uint32, hintsBag HintsBag)
 	// AllHintsForInput gets HintsBag corresponding to input index
 	AllHintsForInput(index uint32) HintsBag
+	pointer() C.TransactionHintsBagPtr
 }
 
 type transactionHintsBag struct {
@@ -186,6 +187,10 @@ func (t *transactionHintsBag) AllHintsForInput(index uint32) HintsBag {
 	C.ergo_lib_transaction_hints_bag_all_hints_for_input(t.p, C.ulong(index), &p)
 	h := &hintsBag{p: p}
 	return newHintsBag(h)
+}
+
+func (t *transactionHintsBag) pointer() C.TransactionHintsBagPtr {
+	return t.p
 }
 
 func finalizeTransactionHintsBag(t *transactionHintsBag) {
