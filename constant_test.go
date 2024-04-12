@@ -1,6 +1,7 @@
 package ergo
 
 import (
+	"encoding/hex"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -57,4 +58,50 @@ func TestNewConstant_TupleExpression(t *testing.T) {
 	assert.Nil(t, err)
 	constValue, _ := con.Value()
 	assert.Equal(t, "BoundedVec{inner:[102,99]}", constValue)
+}
+
+func TestNewConstantFromInt32(t *testing.T) {
+	c := NewConstantFromInt32(999999999)
+	encoded, _ := c.Base16()
+	decoded, _ := NewConstant(encoded)
+	assert.Equal(t, c, decoded)
+}
+
+func TestNewConstantFromInt64(t *testing.T) {
+	c := NewConstantFromInt64(9223372036854775807)
+	encoded, _ := c.Base16()
+	decoded, _ := NewConstant(encoded)
+	assert.Equal(t, c, decoded)
+}
+
+func TestNewConstantFromBytes(t *testing.T) {
+	b := []byte{1, 1, 2, 255}
+	c, _ := NewConstantFromBytes(b)
+	encoded, _ := c.Base16()
+	decoded, _ := NewConstant(encoded)
+	assert.Equal(t, c, decoded)
+}
+
+func TestNewConstantFromECPointBytes(t *testing.T) {
+	str, _ := hex.DecodeString("02d6b2141c21e4f337e9b065a031a6269fb5a49253094fc6243d38662eb765db00")
+	_, err := NewConstantFromECPointBytes(str)
+	assert.NoError(t, err)
+}
+
+func TestNewConstantFromBox(t *testing.T) {
+	json := `{
+              "boxId": "e56847ed19b3dc6b72828fcfb992fdf7310828cf291221269b7ffc72fd66706e",
+              "value": 67500000000,
+              "ergoTree": "100204a00b08cd021dde34603426402615658f1d970cfa7c7bd92ac81a8b16eeebff264d59ce4604ea02d192a39a8cc7a70173007301",
+              "assets": [],
+              "creationHeight": 284761,
+              "additionalRegisters": {},
+              "transactionId": "9148408c04c2e38a6402a7950d6157730fa7d49e9ab3b9cadec481d7769918e9",
+              "index": 1
+            }`
+	testBox, _ := NewBoxFromJson(json)
+	c := NewConstantFromBox(testBox)
+	encoded, _ := c.Base16()
+	decoded, _ := NewConstant(encoded)
+	assert.Equal(t, c, decoded)
 }

@@ -49,6 +49,58 @@ func NewConstant(s string) (Constant, error) {
 	return newConstant(c), nil
 }
 
+// NewConstantFromInt32 creates a new Constant from int32 value
+func NewConstantFromInt32(i int32) Constant {
+	var p C.ConstantPtr
+	C.ergo_lib_constant_from_i32(C.int(i), &p)
+	c := &constant{p}
+	return newConstant(c)
+}
+
+// NewConstantFromInt64 creates a new Constant from int64 value
+func NewConstantFromInt64(i int64) Constant {
+	var p C.ConstantPtr
+	C.ergo_lib_constant_from_i64(C.longlong(i), &p)
+	c := &constant{p}
+	return newConstant(c)
+}
+
+// NewConstantFromBytes creates a new Constant from byte array
+func NewConstantFromBytes(b []byte) (Constant, error) {
+	byteData := C.CBytes(b)
+	defer C.free(unsafe.Pointer(byteData))
+	var p C.ConstantPtr
+	errPtr := C.ergo_lib_constant_from_bytes((*C.uchar)(byteData), C.ulong(len(b)), &p)
+	err := newError(errPtr)
+	if err.isError() {
+		return nil, err.error()
+	}
+	c := &constant{p}
+	return newConstant(c), nil
+}
+
+// NewConstantFromECPointBytes parse from raw EcPoint value from bytes and make ProveDlog Constant
+func NewConstantFromECPointBytes(b []byte) (Constant, error) {
+	byteData := C.CBytes(b)
+	defer C.free(unsafe.Pointer(byteData))
+	var p C.ConstantPtr
+	errPtr := C.ergo_lib_constant_from_ecpoint_bytes((*C.uchar)(byteData), C.ulong(len(b)), &p)
+	err := newError(errPtr)
+	if err.isError() {
+		return nil, err.error()
+	}
+	c := &constant{p}
+	return newConstant(c), nil
+}
+
+// NewConstantFromBox creates a new Constant from Box
+func NewConstantFromBox(box Box) Constant {
+	var p C.ConstantPtr
+	C.ergo_lib_constant_from_ergo_box(box.pointer(), &p)
+	c := &constant{p}
+	return newConstant(c)
+}
+
 func (c *constant) Base16() (string, error) {
 	var constantStr *C.char
 
