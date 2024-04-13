@@ -81,7 +81,7 @@ func (d *dataInputs) Len() uint32 {
 func (d *dataInputs) Get(index uint32) (DataInput, error) {
 	var p C.DataInputPtr
 
-	res := C.ergo_lib_data_inputs_get(d.p, C.ulong(index), &p)
+	res := C.ergo_lib_data_inputs_get(d.p, C.uintptr_t(index), &p)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()

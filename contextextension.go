@@ -28,7 +28,7 @@ func newContextExtension(c *contextExtension) ContextExtension {
 func (c *contextExtension) Keys() []byte {
 	bytesLength := C.ergo_lib_context_extension_len(c.p)
 
-	output := C.malloc(C.ulong(bytesLength))
+	output := C.malloc(C.uintptr_t(bytesLength))
 	defer C.free(unsafe.Pointer(output))
 
 	C.ergo_lib_context_extension_keys(c.p, (*C.uint8_t)(output))

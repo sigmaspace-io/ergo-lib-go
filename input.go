@@ -123,7 +123,7 @@ func newProverResult(pr *proverResult) ProverResult {
 func (pr *proverResult) Bytes() []byte {
 	proofLength := C.ergo_lib_prover_result_proof_len(pr.p)
 
-	output := C.malloc(C.ulong(proofLength))
+	output := C.malloc(C.uintptr_t(proofLength))
 	defer C.free(unsafe.Pointer(output))
 
 	C.ergo_lib_prover_result_proof(pr.p, (*C.uint8_t)(output))
@@ -200,7 +200,7 @@ func (u *unsignedInputs) Len() uint32 {
 func (u *unsignedInputs) Get(index uint32) (UnsignedInput, error) {
 	var p C.UnsignedInputPtr
 
-	res := C.ergo_lib_unsigned_inputs_get(u.p, C.ulong(index), &p)
+	res := C.ergo_lib_unsigned_inputs_get(u.p, C.uintptr_t(index), &p)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -259,7 +259,7 @@ func (i *inputs) Len() uint32 {
 func (i *inputs) Get(index uint32) (Input, error) {
 	var p C.InputPtr
 
-	res := C.ergo_lib_inputs_get(i.p, C.ulong(index), &p)
+	res := C.ergo_lib_inputs_get(i.p, C.uintptr_t(index), &p)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()

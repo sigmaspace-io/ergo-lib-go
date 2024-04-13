@@ -41,7 +41,7 @@ func NewMerkleProof(leafData []byte) (MerkleProof, error) {
 	defer C.free(unsafe.Pointer(byteData))
 	var p C.MerkleProofPtr
 
-	errPtr := C.ergo_merkle_proof_new((*C.uchar)(byteData), C.ulong(len(leafData)), &p)
+	errPtr := C.ergo_merkle_proof_new((*C.uchar)(byteData), C.uintptr_t(len(leafData)), &p)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -73,7 +73,7 @@ func (m *merkleProof) AddNode(hash []byte, side nodeSide) error {
 	byteData := C.CBytes(hash)
 	defer C.free(unsafe.Pointer(byteData))
 
-	errPtr := C.ergo_merkle_proof_add_node(m.p, (*C.uchar)(byteData), C.ulong(len(hash)), C.uchar(side))
+	errPtr := C.ergo_merkle_proof_add_node(m.p, (*C.uchar)(byteData), C.uintptr_t(len(hash)), C.uchar(side))
 	err := newError(errPtr)
 	if err.isError() {
 		return err.error()
@@ -84,7 +84,7 @@ func (m *merkleProof) AddNode(hash []byte, side nodeSide) error {
 func (m *merkleProof) Valid(expectedRoot []byte) bool {
 	byteData := C.CBytes(expectedRoot)
 	defer C.free(unsafe.Pointer(byteData))
-	res := C.ergo_merkle_proof_valid(m.p, (*C.uchar)(byteData), C.ulong(len(expectedRoot)))
+	res := C.ergo_merkle_proof_valid(m.p, (*C.uchar)(byteData), C.uintptr_t(len(expectedRoot)))
 	return bool(res)
 }
 

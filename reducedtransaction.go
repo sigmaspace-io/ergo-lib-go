@@ -90,7 +90,7 @@ func (p *propositions) Add(bytes []byte) error {
 	byteData := C.CBytes(bytes)
 	defer C.free(unsafe.Pointer(byteData))
 
-	errPtr := C.ergo_lib_propositions_add_proposition_from_bytes(p.p, (*C.uchar)(byteData), C.ulong(len(bytes)))
+	errPtr := C.ergo_lib_propositions_add_proposition_from_bytes(p.p, (*C.uchar)(byteData), C.uintptr_t(len(bytes)))
 	err := newError(errPtr)
 	if err.isError() {
 		return err.error()
