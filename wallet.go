@@ -215,7 +215,7 @@ func (w *wallet) SignMessageUsingP2PK(address Address, message []byte) (SignedMe
 	defer C.free(unsafe.Pointer(byteData))
 
 	var p C.SignedMessagePtr
-	errPtr := C.ergo_lib_wallet_sign_message_using_p2pk(w.p, address.pointer(), (*C.uchar)(byteData), C.ulong(len(message)), &p)
+	errPtr := C.ergo_lib_wallet_sign_message_using_p2pk(w.p, address.pointer(), (*C.uchar)(byteData), C.uintptr_t(len(message)), &p)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
