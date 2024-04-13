@@ -29,4 +29,7 @@ jobs:
      # - name: Build
      #   run: CGO_ENABLED=1 go build -ldflags "-linkmode external -extldflags '-static' -s -w" -v ./...
       - name: Test with the Go CLI
-        run: CGO_ENABLED=1 GODEBUG=cgocheck=2 go test
+        run: go test
+        env:
+          CGO_ENABLED: 1
+          GODEBUG: cgocheck=2
