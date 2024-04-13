@@ -140,7 +140,7 @@ func (b *blockHeaders) Len() uint32 {
 func (b *blockHeaders) Get(index uint32) (BlockHeader, error) {
 	var p C.BlockHeaderPtr
 
-	res := C.ergo_lib_block_headers_get(b.p, C.ulong(index), &p)
+	res := C.ergo_lib_block_headers_get(b.p, C.uintptr_t(index), &p)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -203,7 +203,7 @@ func (b *blockIds) Len() uint32 {
 func (b *blockIds) Get(index uint32) (BlockId, error) {
 	var p C.BlockIdPtr
 
-	res := C.ergo_lib_block_ids_get(b.p, C.ulong(index), &p)
+	res := C.ergo_lib_block_ids_get(b.p, C.uintptr_t(index), &p)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()

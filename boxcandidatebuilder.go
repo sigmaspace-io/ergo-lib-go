@@ -137,7 +137,7 @@ func (b *boxCandidateBuilder) MintToken(token Token, tokenName string, tokenDesc
 	tknDescStr := C.CString(tokenDesc)
 	defer C.free(unsafe.Pointer(tknDescStr))
 
-	C.ergo_lib_ergo_box_candidate_builder_mint_token(b.p, token.pointer(), tknNameStr, tknDescStr, C.ulong(numDecimals))
+	C.ergo_lib_ergo_box_candidate_builder_mint_token(b.p, token.pointer(), tknNameStr, tknDescStr, C.uintptr_t(numDecimals))
 }
 
 func (b *boxCandidateBuilder) AddToken(tokenId TokenId, tokenAmount TokenAmount) {

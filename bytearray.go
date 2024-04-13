@@ -27,7 +27,7 @@ func NewByteArray(bytes []byte) (ByteArray, error) {
 	byteData := C.CBytes(bytes)
 	defer C.free(unsafe.Pointer(byteData))
 
-	errPtr := C.ergo_lib_byte_array_from_raw_parts((*C.uchar)(byteData), C.ulong(len(bytes)), &p)
+	errPtr := C.ergo_lib_byte_array_from_raw_parts((*C.uchar)(byteData), C.uintptr_t(len(bytes)), &p)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -77,7 +77,7 @@ func (b *byteArrays) Len() uint32 {
 func (b *byteArrays) Get(index uint32) (ByteArray, error) {
 	var p C.ByteArrayPtr
 
-	res := C.ergo_lib_byte_arrays_get(b.p, C.ulong(index), &p)
+	res := C.ergo_lib_byte_arrays_get(b.p, C.uintptr_t(index), &p)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()

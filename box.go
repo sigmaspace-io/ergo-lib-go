@@ -498,7 +498,7 @@ func (b *boxAssetsDataList) Len() uint32 {
 func (b *boxAssetsDataList) Get(index uint32) (BoxAssetsData, error) {
 	var p C.ErgoBoxAssetsDataPtr
 
-	res := C.ergo_lib_ergo_box_assets_data_list_get(b.p, C.ulong(index), &p)
+	res := C.ergo_lib_ergo_box_assets_data_list_get(b.p, C.uintptr_t(index), &p)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -562,7 +562,7 @@ func (b *boxCandidates) Len() uint32 {
 func (b *boxCandidates) Get(index uint32) (BoxCandidate, error) {
 	var p C.ErgoBoxCandidatePtr
 
-	res := C.ergo_lib_ergo_box_candidates_get(b.p, C.ulong(index), &p)
+	res := C.ergo_lib_ergo_box_candidates_get(b.p, C.uintptr_t(index), &p)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -626,7 +626,7 @@ func (b *boxes) Len() uint32 {
 func (b *boxes) Get(index uint32) (Box, error) {
 	var p C.ErgoBoxPtr
 
-	res := C.ergo_lib_ergo_boxes_get(b.p, C.ulong(index), &p)
+	res := C.ergo_lib_ergo_boxes_get(b.p, C.uintptr_t(index), &p)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()

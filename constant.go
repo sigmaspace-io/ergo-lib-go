@@ -84,7 +84,7 @@ func NewConstantFromECPointBytes(b []byte) (Constant, error) {
 	byteData := C.CBytes(b)
 	defer C.free(unsafe.Pointer(byteData))
 	var p C.ConstantPtr
-	errPtr := C.ergo_lib_constant_from_ecpoint_bytes((*C.uchar)(byteData), C.ulong(len(b)), &p)
+	errPtr := C.ergo_lib_constant_from_ecpoint_bytes((*C.uchar)(byteData), C.uintptr_t(len(b)), &p)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
