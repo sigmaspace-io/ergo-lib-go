@@ -9,6 +9,8 @@ The libraries under `lib` where compiled from `sigma-rust` with the following co
 ```
 cross build -p ergo-lib-c --release --target x86_64-apple-darwin
 cross build -p ergo-lib-c --release --target x86_64-unknown-linux-gnu
+cross build -p ergo-lib-c --release --target aarch64-unknown-linux-gnu
+cross build -p ergo-lib-c --release --target x86_64-pc-windows-gnu
 ```
 
 ### Credits
