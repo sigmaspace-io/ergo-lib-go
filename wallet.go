@@ -62,7 +62,7 @@ func (m *mnemonicGenerator) GenerateFromEntropy(entropy []byte) (string, error) 
 	byteData := C.CBytes(entropy)
 	defer C.free(unsafe.Pointer(byteData))
 
-	returnStr = C.ergo_lib_mnemonic_generator_generate_from_entropy(m.p, (*C.uchar)(byteData), C.ulong(len(entropy)))
+	returnStr = C.ergo_lib_mnemonic_generator_generate_from_entropy(m.p, (*C.uchar)(byteData), C.uintptr_t(len(entropy)))
 	defer C.ergo_lib_mnemonic_generator_free_mnemonic(returnStr.value)
 	err := newError(returnStr.error)
 	if err.isError() {

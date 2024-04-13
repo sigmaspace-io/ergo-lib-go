@@ -227,7 +227,7 @@ func (t *tokens) Len() int {
 func (t *tokens) Get(index int) (Token, error) {
 	var p C.TokenPtr
 
-	res := C.ergo_lib_tokens_get(t.p, C.ulong(index), &p)
+	res := C.ergo_lib_tokens_get(t.p, C.uintptr_t(index), &p)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()

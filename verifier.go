@@ -11,7 +11,7 @@ func VerifySignature(address Address, message []byte, signature SignedMessage) (
 	byteData := C.CBytes(message)
 	defer C.free(unsafe.Pointer(byteData))
 
-	res := C.ergo_lib_verify_signature(address.pointer(), (*C.uchar)(byteData), C.ulong(len(message)), signature.pointer())
+	res := C.ergo_lib_verify_signature(address.pointer(), (*C.uchar)(byteData), C.uintptr_t(len(message)), signature.pointer())
 	err := newError(res.error)
 	if err.isError() {
 		return false, err.error()

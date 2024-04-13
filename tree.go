@@ -108,7 +108,7 @@ func (t *tree) TemplateHash() (string, error) {
 		return "", byteErr
 	}
 
-	output := C.malloc(C.ulong(bytesLength))
+	output := C.malloc(C.uintptr_t(bytesLength))
 	defer C.free(unsafe.Pointer(output))
 
 	errPtr := C.ergo_lib_ergo_tree_template_bytes(t.p, (*C.uint8_t)(output))
@@ -141,7 +141,7 @@ func (t *tree) Constant(index int) (Constant, error) {
 	var constantOut C.ConstantPtr
 	var returnOption C.ReturnOption
 
-	indexNumber := C.ulong(index)
+	indexNumber := C.uintptr_t(index)
 
 	returnOption = C.ergo_lib_ergo_tree_get_constant(t.p, indexNumber, &constantOut)
 	err := newError(returnOption.error)

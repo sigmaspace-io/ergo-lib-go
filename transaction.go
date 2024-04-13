@@ -129,7 +129,7 @@ func (h *hintsBag) Len() uint32 {
 func (h *hintsBag) Get(index uint32) (CommitmentHint, error) {
 	var p C.CommitmentHintPtr
 
-	res := C.ergo_lib_hints_bag_get(h.p, C.ulong(index), &p)
+	res := C.ergo_lib_hints_bag_get(h.p, C.uintptr_t(index), &p)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -179,12 +179,12 @@ func NewTransactionHintsBag() TransactionHintsBag {
 }
 
 func (t *transactionHintsBag) AddHintsForInput(index uint32, hintsBag HintsBag) {
-	C.ergo_lib_transaction_hints_bag_add_hints_for_input(t.p, C.ulong(index), hintsBag.pointer())
+	C.ergo_lib_transaction_hints_bag_add_hints_for_input(t.p, C.uintptr_t(index), hintsBag.pointer())
 }
 
 func (t *transactionHintsBag) AllHintsForInput(index uint32) HintsBag {
 	var p C.HintsBagPtr
-	C.ergo_lib_transaction_hints_bag_all_hints_for_input(t.p, C.ulong(index), &p)
+	C.ergo_lib_transaction_hints_bag_all_hints_for_input(t.p, C.uintptr_t(index), &p)
 	h := &hintsBag{p: p}
 	return newHintsBag(h)
 }

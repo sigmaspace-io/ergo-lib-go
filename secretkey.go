@@ -60,7 +60,7 @@ func (s *secretKey) Address() Address {
 }
 
 func (s *secretKey) Bytes() []byte {
-	bytes := C.malloc(C.ulong(32))
+	bytes := C.malloc(C.uintptr_t(32))
 	C.ergo_lib_secret_key_to_bytes(s.p, (*C.uint8_t)(bytes))
 	defer C.free(unsafe.Pointer(bytes))
 	result := C.GoBytes(bytes, C.int(32))
@@ -111,7 +111,7 @@ func (s *secretKeys) Len() uint32 {
 func (s *secretKeys) Get(index uint32) (SecretKey, error) {
 	var p C.SecretKeyPtr
 
-	res := C.ergo_lib_secret_keys_get(s.p, C.ulong(index), &p)
+	res := C.ergo_lib_secret_keys_get(s.p, C.uintptr_t(index), &p)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
