@@ -3,7 +3,7 @@ Go wrapper around C bindings for ErgoLib from [sigma-rust](https://github.com/er
 
 ### Install
 ```
-go get -u https://github.com/sigmaspace-io/ergo-lib-go
+go get -u github.com/sigmaspace-io/ergo-lib-go
 ```
 
 ### Supported Platforms
@@ -49,7 +49,7 @@ This library makes heavy use of cgo. A set of precompiled shared library objects
     <tr>
       <td>Windows</td>
       <td><code>amd64</code></td>
-      <td><code>x86_64-pc-windows-msvc</code></td>
+      <td><code>x86_64-pc-windows-gnu</code></td>
       <td>⏳</td>
       <td>⏳</td>
     </tr>
@@ -73,7 +73,7 @@ This library makes heavy use of cgo. A set of precompiled shared library objects
 </table>
 
 ### Library
-The libraries under `lib` where compiled from `sigma-rust` with the following commands:
+The libraries under `lib` were compiled from `sigma-rust` with the following commands:
 ```
 cross build -p ergo-lib-c --release --target x86_64-apple-darwin
 cross build -p ergo-lib-c --release --target x86_64-unknown-linux-gnu
