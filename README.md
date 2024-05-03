@@ -43,15 +43,15 @@ This library makes heavy use of cgo. A set of precompiled shared library objects
     <tr>
       <td><code>aarch64</code></td>
       <td><code>aarch64-apple-darwin</code></td>
-      <td>⏳</td>
-      <td>⏳</td>
+      <td>✅</td>
+      <td>✅</td>
     </tr>
     <tr>
       <td>Windows</td>
       <td><code>amd64</code></td>
       <td><code>x86_64-pc-windows-gnu</code></td>
-      <td>⏳</td>
-      <td>⏳</td>
+      <td>✅</td>
+      <td>✅</td>
     </tr>
   </tbody>
 </table>
@@ -75,7 +75,8 @@ This library makes heavy use of cgo. A set of precompiled shared library objects
 ### Library
 The libraries under `lib` were compiled from `sigma-rust` with the following commands:
 ```
-cross build -p ergo-lib-c --release --target x86_64-apple-darwin
+cargo build -p ergo-lib-c --release --target x86_64-apple-darwin
+cargo build -p ergo-lib-c --release --target x86_64-apple-darwin
 cross build -p ergo-lib-c --release --target x86_64-unknown-linux-gnu
 cross build -p ergo-lib-c --release --target aarch64-unknown-linux-gnu
 cross build -p ergo-lib-c --release --target x86_64-pc-windows-gnu

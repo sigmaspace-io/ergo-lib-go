@@ -140,6 +140,8 @@ typedef struct Contract Contract;
  */
 typedef struct DataInput DataInput;
 
+typedef struct DerivationPath DerivationPath;
+
 /**
  * Ergo box, that is taking part in some transaction on the chain Differs with [`ErgoBoxCandidate`]
  * by added transaction id and an index in the input of that transaction
@@ -174,6 +176,8 @@ typedef struct ErgoStateContext ErgoStateContext;
 typedef struct ErgoTree ErgoTree;
 
 typedef struct Error Error;
+
+typedef struct ExtPubKey ExtPubKey;
 
 typedef struct ExtSecretKey ExtSecretKey;
 
@@ -466,6 +470,10 @@ typedef const struct Collection_DataInput *ConstCollectionPtr_DataInput;
 
 typedef ConstCollectionPtr_DataInput ConstDataInputsPtr;
 
+typedef struct DerivationPath *DerivationPathPtr;
+
+typedef const struct DerivationPath *ConstDerivationPathPtr;
+
 typedef struct ErgoBoxAssetsData *ErgoBoxAssetsDataPtr;
 
 typedef const struct ErgoBoxAssetsData *ConstErgoBoxAssetsDataPtr;
@@ -512,9 +520,15 @@ typedef const struct ErgoStateContext *ConstErgoStateContextPtr;
 
 typedef const struct PreHeader *ConstPreHeaderPtr;
 
+typedef const struct ExtPubKey *ConstExtPubKeyPtr;
+
+typedef struct ExtPubKey *ExtPubKeyPtr;
+
 typedef const struct ExtSecretKey *ConstExtSecretKeyPtr;
 
 typedef struct ExtSecretKey *ExtSecretKeyPtr;
+
+typedef struct SecretKey *SecretKeyPtr;
 
 typedef struct HintsBag *HintsBagPtr;
 
@@ -621,8 +635,6 @@ typedef struct CompletionCallback {
 #if defined(ERGO_REST)
 typedef struct RequestHandle *RequestHandlePtr;
 #endif
-
-typedef struct SecretKey *SecretKeyPtr;
 
 typedef const struct SecretKey *ConstSecretKeyPtr;
 
@@ -1129,6 +1141,43 @@ void ergo_lib_delete_error(ErrorPtr error);
 void ergo_lib_delete_string(char *ptr);
 
 /**
+ * Drop `DerivationPath`
+ */
+void ergo_lib_derivation_path_delete(DerivationPathPtr ptr);
+
+/**
+ * Returns the length of the derivation path
+ */
+uintptr_t ergo_lib_derivation_path_depth(ConstDerivationPathPtr derivation_path_ptr);
+
+/**
+ * Create derivation path from string
+ * String should be in the form of: m/44/429/acc'/0/addr
+ */
+ErrorPtr ergo_lib_derivation_path_from_str(const char *derivation_path_str,
+                                           DerivationPathPtr *derivation_path_out);
+
+/**
+ * Create DerivationPath from account index and address indices
+ */
+ErrorPtr ergo_lib_derivation_path_new(uint32_t account,
+                                      const uint32_t *address_indices,
+                                      uintptr_t len,
+                                      DerivationPathPtr *derivation_path_out);
+
+/**
+ * Returns a new derivation path with the last element of the derivation path being increased, e.g. m/1/2 -> m/1/3
+ */
+ErrorPtr ergo_lib_derivation_path_next(ConstDerivationPathPtr derivation_path_ptr,
+                                       DerivationPathPtr *derivation_path_out);
+
+/**
+ * Get derivation path as string in the m/44/429/acc'/0/addr format
+ */
+void ergo_lib_derivation_path_to_str(ConstDerivationPathPtr derivation_path_ptr,
+                                     const char **_derivation_path_str);
+
+/**
  * Drop `ErgoBoxAssetsData`
  */
 void ergo_lib_ergo_box_assets_data_delete(ErgoBoxAssetsDataPtr ptr);
@@ -1537,6 +1586,40 @@ ErrorPtr ergo_lib_ergo_tree_with_constant(ConstErgoTreePtr ergo_tree_ptr,
 char *ergo_lib_error_to_string(ErrorPtr error);
 
 /**
+ * Get address for extended public key
+ */
+void ergo_lib_ext_pub_key_address(ConstExtPubKeyPtr ext_pub_key_ptr, AddressPtr *address_out);
+
+/**
+ * Derive a new extended public key from the provided index
+ * The index is in the form of soft or hardened indices
+ * For example: 4 or 4' respectively
+ */
+ErrorPtr ergo_lib_ext_pub_key_child(ConstExtPubKeyPtr derive_from_key_ptr,
+                                    uint32_t child_index,
+                                    ExtPubKeyPtr *ext_pub_key_out);
+
+/**
+ * Drop `ExtPubKey`
+ */
+void ergo_lib_ext_pub_key_delete(ExtPubKeyPtr ptr);
+
+/**
+ * Derive a new extended public key from the derivation path
+ */
+ErrorPtr ergo_lib_ext_pub_key_derive(ConstExtPubKeyPtr ext_pub_key_ptr,
+                                     ConstDerivationPathPtr derivation_path_ptr,
+                                     ExtPubKeyPtr *ext_pub_key_out);
+
+/**
+ * Create ExtPubKey from public key bytes, chain code and derivation path
+ */
+ErrorPtr ergo_lib_ext_pub_key_new(const uint8_t *public_key_bytes,
+                                  const uint8_t *chain_code_ptr,
+                                  ConstDerivationPathPtr derivation_path_ptr,
+                                  ExtPubKeyPtr *ext_pub_key_out);
+
+/**
  * Derive a new extended secret key from the provided index
  * The index is in the form of soft or hardened indices
  * For example: 4 or 4' respectively
@@ -1551,19 +1634,43 @@ ErrorPtr ergo_lib_ext_secret_key_child(ConstExtSecretKeyPtr secret_key_bytes_ptr
 void ergo_lib_ext_secret_key_delete(ExtSecretKeyPtr ptr);
 
 /**
+ * Derive a new extended secret key from the derivation path
+ */
+ErrorPtr ergo_lib_ext_secret_key_derive(ConstExtSecretKeyPtr ext_secret_key_ptr,
+                                        ConstDerivationPathPtr derivation_path_ptr,
+                                        ExtSecretKeyPtr *ext_secret_key_out);
+
+/**
  * Derive root extended secret key from seed bytes
  */
 ErrorPtr ergo_lib_ext_secret_key_derive_master(const uint8_t *seed,
                                                ExtSecretKeyPtr *ext_secret_key_out);
 
 /**
+ * Get secret key for extended secret key
+ */
+void ergo_lib_ext_secret_key_get_secret_key(ConstExtSecretKeyPtr ext_secret_key_ptr,
+                                            SecretKeyPtr *secret_key_out);
+
+/**
  * Create ExtSecretKey from secret key bytes, chain code and derivation path
- * Derivation path should be a string in the form of: m/44/429/acc'/0/addr
  */
 ErrorPtr ergo_lib_ext_secret_key_new(const uint8_t *secret_key_bytes_ptr,
                                      const uint8_t *chain_code_ptr,
-                                     const char *derivation_path_str,
+                                     ConstDerivationPathPtr derivation_path_ptr,
                                      ExtSecretKeyPtr *ext_secret_key_out);
+
+/**
+ * Get derivation path for extended secret key
+ */
+void ergo_lib_ext_secret_key_path(ConstExtSecretKeyPtr ext_secret_key_ptr,
+                                  DerivationPathPtr *derivation_path_out);
+
+/**
+ * The extended public key associated with this secret key
+ */
+void ergo_lib_ext_secret_key_public_key(ConstExtSecretKeyPtr ext_secret_key_ptr,
+                                        ExtPubKeyPtr *ext_pub_key_out);
 
 /**
  * Add commitment hint to the bag
