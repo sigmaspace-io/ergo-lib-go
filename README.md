@@ -76,7 +76,7 @@ This library makes heavy use of cgo. A set of precompiled shared library objects
 The libraries under `lib` were compiled from `sigma-rust` with the following commands:
 ```
 cargo build -p ergo-lib-c --release --target x86_64-apple-darwin
-cargo build -p ergo-lib-c --release --target x86_64-apple-darwin
+cargo build -p ergo-lib-c --release --target aarch64-apple-darwin
 cross build -p ergo-lib-c --release --target x86_64-unknown-linux-gnu
 cross build -p ergo-lib-c --release --target aarch64-unknown-linux-gnu
 cross build -p ergo-lib-c --release --target x86_64-pc-windows-gnu

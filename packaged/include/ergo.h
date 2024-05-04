@@ -1767,6 +1767,14 @@ struct ReturnString ergo_lib_mnemonic_generator_generate_from_entropy(MnemonicGe
                                                                       uintptr_t len);
 
 /**
+ * Convert a mnemonic phrase into a mnemonic seed
+ * mnemonic_pass is optional and is used to salt the seed
+ */
+void ergo_lib_mnemonic_to_seed(const char *mnemonic_phrase,
+                               const char *mnemonic_pass,
+                               uint8_t *output);
+
+/**
  * Delete `NipopowProof`
  */
 void ergo_lib_nipopow_proof_delete(NipopowProofPtr ptr);
