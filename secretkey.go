@@ -5,6 +5,7 @@ package ergo
 */
 import "C"
 import (
+	"errors"
 	"runtime"
 	"unsafe"
 )
@@ -36,7 +37,12 @@ func NewSecretKey() SecretKey {
 }
 
 // NewSecretKeyFromBytes parses dlog secret key from bytes (SEC-1-encoded scalar)
+// provided secret key bytes must be of length 32
 func NewSecretKeyFromBytes(bytes []byte) (SecretKey, error) {
+	if len(bytes) != 32 {
+		return nil, errors.New("secret key size must be 32 bytes")
+	}
+
 	byteData := C.CBytes(bytes)
 	defer C.free(unsafe.Pointer(byteData))
 
