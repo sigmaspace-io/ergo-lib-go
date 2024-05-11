@@ -361,6 +361,8 @@ type Transaction interface {
 	Json() (string, error)
 	// JsonEIP12 returns json representation of Transaction as string according to EIP-12 https://github.com/ergoplatform/eips/pull/23
 	JsonEIP12() (string, error)
+	// Validate validates the current Transaction
+	Validate(stateContext StateContext, boxesToSpent Boxes, dataBoxes Boxes) error
 	pointer() C.TransactionPtr
 }
 
@@ -472,6 +474,15 @@ func (t *transaction) JsonEIP12() (string, error) {
 	result := C.GoString(outStr)
 
 	return result, nil
+}
+
+func (t *transaction) Validate(stateContext StateContext, boxesToSpent Boxes, dataBoxes Boxes) error {
+	errPtr := C.ergo_lib_tx_validate(t.p, stateContext.pointer(), boxesToSpent.pointer(), dataBoxes.pointer())
+	err := newError(errPtr)
+	if err.isError() {
+		return err.error()
+	}
+	return nil
 }
 
 func (t *transaction) pointer() C.TransactionPtr {

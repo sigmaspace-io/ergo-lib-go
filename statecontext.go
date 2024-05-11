@@ -21,10 +21,10 @@ func newStateContext(s *stateContext) StateContext {
 }
 
 // NewStateContext creates StateContext from PreHeader and BlockHeaders
-func NewStateContext(preHeader PreHeader, headers BlockHeaders) (StateContext, error) {
+func NewStateContext(preHeader PreHeader, headers BlockHeaders, parameters Parameters) (StateContext, error) {
 	var p C.ErgoStateContextPtr
 
-	errPtr := C.ergo_lib_ergo_state_context_new(preHeader.pointer(), headers.pointer(), &p)
+	errPtr := C.ergo_lib_ergo_state_context_new(preHeader.pointer(), headers.pointer(), parameters.pointer(), &p)
 	err := newError(errPtr)
 
 	if err.isError() {

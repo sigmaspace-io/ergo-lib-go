@@ -217,6 +217,11 @@ typedef struct NodeConf NodeConf;
 typedef struct NodeInfo NodeInfo;
 #endif
 
+/**
+ * Blockchain parameters
+ */
+typedef struct Parameters Parameters;
+
 typedef struct PoPowHeader PoPowHeader;
 
 /**
@@ -329,6 +334,8 @@ typedef struct Error *ErrorPtr;
 typedef const struct ErgoTree *ConstErgoTreePtr;
 
 typedef const struct Address *ConstAddressPtr;
+
+typedef struct ErgoTree *ErgoTreePtr;
 
 typedef struct BatchMerkleProof *BatchMerkleProofPtr;
 
@@ -456,8 +463,6 @@ typedef struct Contract *ContractPtr;
 
 typedef const struct Contract *ConstContractPtr;
 
-typedef struct ErgoTree *ErgoTreePtr;
-
 typedef const struct DataInput *ConstDataInputPtr;
 
 typedef struct DataInput *DataInputPtr;
@@ -519,6 +524,8 @@ typedef struct ErgoStateContext *ErgoStateContextPtr;
 typedef const struct ErgoStateContext *ConstErgoStateContextPtr;
 
 typedef const struct PreHeader *ConstPreHeaderPtr;
+
+typedef const struct Parameters *ConstParametersPtr;
 
 typedef const struct ExtPubKey *ConstExtPubKeyPtr;
 
@@ -590,6 +597,8 @@ typedef struct NodeConf *NodeConfPtr;
 #if defined(ERGO_REST)
 typedef struct NodeInfo *NodeInfoPtr;
 #endif
+
+typedef struct Parameters *ParametersPtr;
 
 typedef const struct PoPowHeader *ConstPoPowHeaderPtr;
 
@@ -708,11 +717,17 @@ ErrorPtr ergo_lib_address_from_ergo_tree(ConstErgoTreePtr ergo_tree_ptr, Address
 
 ErrorPtr ergo_lib_address_from_mainnet(const char *address_str, AddressPtr *address_out);
 
+ErrorPtr ergo_lib_address_from_public_key(const uint8_t *bytes_ptr,
+                                          uintptr_t len,
+                                          AddressPtr *address_out);
+
 ErrorPtr ergo_lib_address_from_testnet(const char *address_str, AddressPtr *address_out);
 
 void ergo_lib_address_to_base58(ConstAddressPtr address,
                                 NetworkPrefix network_prefix,
                                 const char **_address_str);
+
+void ergo_lib_address_to_ergo_tree(ConstAddressPtr address, ErgoTreePtr *ergo_tree_out);
 
 uint8_t ergo_lib_address_type_prefix(ConstAddressPtr address);
 
@@ -1506,6 +1521,7 @@ bool ergo_lib_ergo_state_context_eq(ConstErgoStateContextPtr ergo_state_context_
  */
 ErrorPtr ergo_lib_ergo_state_context_new(ConstPreHeaderPtr pre_header_ptr,
                                          ConstBlockHeadersPtr headers,
+                                         ConstParametersPtr parameters,
                                          ErgoStateContextPtr *ergo_state_context_out);
 
 /**
@@ -1613,6 +1629,8 @@ ErrorPtr ergo_lib_ext_pub_key_derive(ConstExtPubKeyPtr ext_pub_key_ptr,
 
 /**
  * Create ExtPubKey from public key bytes, chain code and derivation path
+ * public_key_bytes needs to be the length of PubKeyBytes::LEN (33 bytes)
+ * chain_code_ptr needs to be the length of ChainCode::LEN (32 bytes)
  */
 ErrorPtr ergo_lib_ext_pub_key_new(const uint8_t *public_key_bytes,
                                   const uint8_t *chain_code_ptr,
@@ -1654,6 +1672,8 @@ void ergo_lib_ext_secret_key_get_secret_key(ConstExtSecretKeyPtr ext_secret_key_
 
 /**
  * Create ExtSecretKey from secret key bytes, chain code and derivation path
+ * secret_key_bytes_ptr needs to be the length of SecretKeyBytes::LEN (32 bytes)
+ * chain_code_ptr needs to be the length of ChainCode::LEN (32 bytes)
  */
 ErrorPtr ergo_lib_ext_secret_key_new(const uint8_t *secret_key_bytes_ptr,
                                      const uint8_t *chain_code_ptr,
@@ -1868,6 +1888,32 @@ void ergo_lib_node_info_get_name(NodeInfoPtr ptr, const char **name_str);
  */
 bool ergo_lib_node_info_is_at_least_version_4_0_100(NodeInfoPtr node_info_ptr);
 #endif
+
+/**
+ * Return default blockchain parameters that were set at genesis
+ */
+void ergo_lib_parameters_default(ParametersPtr *parameters_out);
+
+void ergo_lib_parameters_delete(ParametersPtr parameters);
+
+/**
+ * Parse parameters from JSON. Supports Ergo Node API/Explorer API
+ */
+ErrorPtr ergo_lib_parameters_from_json(const char *json_str, ParametersPtr *parameters_out);
+
+/**
+ * Create new parameters from provided blockchain parameters
+ */
+void ergo_lib_parameters_new(int32_t block_version,
+                             int32_t storage_fee_factor,
+                             int32_t min_value_per_byte,
+                             int32_t max_block_size,
+                             int32_t max_block_cost,
+                             int32_t token_access_cost,
+                             int32_t input_cost,
+                             int32_t data_input_cost,
+                             int32_t output_cost,
+                             ParametersPtr *parameters_out);
 
 bool ergo_lib_po_pow_header_eq(ConstPoPowHeaderPtr po_pow_header_ptr_0,
                                ConstPoPowHeaderPtr po_pow_header_ptr_1);
@@ -2413,6 +2459,11 @@ ErrorPtr ergo_lib_tx_to_json(ConstTransactionPtr tx_ptr,
  * JSON representation according to EIP-12 <https://github.com/ergoplatform/eips/pull/23>
  */
 ErrorPtr ergo_lib_tx_to_json_eip12(ConstTransactionPtr tx_ptr, const char **_json_str);
+
+ErrorPtr ergo_lib_tx_validate(ConstTransactionPtr tx_ptr,
+                              ConstErgoStateContextPtr state_context_ptr,
+                              ConstCollectionPtr_ErgoBox boxes_to_spend_ptr,
+                              ConstCollectionPtr_ErgoBox data_boxes_ptr);
 
 /**
  * Get box id

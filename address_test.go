@@ -35,3 +35,11 @@ func TestAddress_TypePrefix_P2Pk(t *testing.T) {
 
 	assert.Equal(t, P2PkPrefix, addr.TypePrefix())
 }
+
+func TestAddress_Tree(t *testing.T) {
+	addr, _ := NewAddress("9hdxkYakTHWXR992umPcvh8bAEGG9Sdoi7uW8TKXk1enXCDFBVJ")
+	testTree := addr.Tree()
+	testAddr, treeErr := NewAddressFromTree(testTree)
+	assert.NoError(t, treeErr)
+	assert.Equal(t, addr.Base58(MainnetPrefix), testAddr.Base58(MainnetPrefix))
+}

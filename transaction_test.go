@@ -129,16 +129,17 @@ func TestWallet_SignTransaction(t *testing.T) {
 	testBlockHeaders := testBlockHeadersFromJson()
 	testBlockHeader, _ := testBlockHeaders.Get(0)
 	testPreHeader := NewPreHeader(testBlockHeader)
+	testParameters := DefaultParameters()
 
-	ctx, _ := NewStateContext(testPreHeader, testBlockHeaders)
+	ctx, _ := NewStateContext(testPreHeader, testBlockHeaders, testParameters)
 	testSecretKeys := NewSecretKeys()
 	testSecretKeys.Add(sk)
 	testWallet := NewWalletFromSecretKeys(testSecretKeys)
 
 	signedTx, signingErr := testWallet.SignTransaction(ctx, tx, unspentBoxes, txDataInputs)
 	assert.NoError(t, signingErr)
-	_, signedTxJsonErr := signedTx.JsonEIP12()
-	assert.NoError(t, signedTxJsonErr)
+	validationErr := signedTx.Validate(ctx, unspentBoxes, txDataInputs)
+	assert.NoError(t, validationErr)
 }
 
 func TestMintToken(t *testing.T) {
@@ -285,7 +286,8 @@ func TestMultiSigTx(t *testing.T) {
 	testBlockHeaders := testBlockHeadersFromJson()
 	testBlockHeader, _ := testBlockHeaders.Get(0)
 	testPreHeader := NewPreHeader(testBlockHeader)
-	ctx, _ := NewStateContext(testPreHeader, testBlockHeaders)
+	testParameters := DefaultParameters()
+	ctx, _ := NewStateContext(testPreHeader, testBlockHeaders, testParameters)
 
 	sksAlice := NewSecretKeys()
 	sksAlice.Add(aliceSecret)
@@ -319,6 +321,8 @@ func TestMultiSigTx(t *testing.T) {
 	bobTxHintsBag := NewTransactionHintsBag()
 	bobTxHintsBag.AddHintsForInput(0, bobHintsBag)
 
-	_, signErr := walletBob.SignTransactionMulti(ctx, tx, unspentBoxes, txDataInputs, bobTxHintsBag)
+	signedTx, signErr := walletBob.SignTransactionMulti(ctx, tx, unspentBoxes, txDataInputs, bobTxHintsBag)
 	assert.NoError(t, signErr)
+	validationErr := signedTx.Validate(ctx, unspentBoxes, txDataInputs)
+	assert.NoError(t, validationErr)
 }
