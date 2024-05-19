@@ -435,6 +435,18 @@ typedef struct ErgoBox *ErgoBoxPtr;
  * Convenience type to allow us to pass Rust enums with `u8` representation through FFI to the C
  * side.
  */
+typedef struct ReturnNum_i16 {
+  /**
+   * Returned value. Note that it's only valid if the error field is null!
+   */
+  int16_t value;
+  ErrorPtr error;
+} ReturnNum_i16;
+
+/**
+ * Convenience type to allow us to pass Rust enums with `u8` representation through FFI to the C
+ * side.
+ */
 typedef struct ReturnNum_i32 {
   /**
    * Returned value. Note that it's only valid if the error field is null!
@@ -1012,6 +1024,11 @@ ErrorPtr ergo_lib_constant_from_ecpoint_bytes(const uint8_t *bytes_ptr,
 void ergo_lib_constant_from_ergo_box(ConstErgoBoxPtr ergo_box_ptr, ConstantPtr *constant_out);
 
 /**
+ * Create from i16 value
+ */
+void ergo_lib_constant_from_i16(int16_t value, ConstantPtr *constant_out);
+
+/**
  * Create from i32 value
  */
 void ergo_lib_constant_from_i32(int32_t value, ConstantPtr *constant_out);
@@ -1038,6 +1055,11 @@ ErrorPtr ergo_lib_constant_to_bytes(ConstConstantPtr constant_ptr, uint8_t *outp
  * Extract ErgoBox value, returning error if wrong type
  */
 ErrorPtr ergo_lib_constant_to_ergo_box(ConstConstantPtr constant_ptr, ErgoBoxPtr *ergo_box_out);
+
+/**
+ * Extract i32 value, returning error if wrong type
+ */
+struct ReturnNum_i16 ergo_lib_constant_to_i16(ConstConstantPtr constant_ptr);
 
 /**
  * Extract i32 value, returning error if wrong type
@@ -1072,6 +1094,15 @@ void ergo_lib_context_extension_delete(ContextExtensionPtr ptr);
 void ergo_lib_context_extension_empty(ContextExtensionPtr *context_extension_out);
 
 /**
+ * Returns constant with given key
+ * or None if key doesn't exist
+ * or error if constants parsing were failed
+ */
+struct ReturnOption ergo_lib_context_extension_get(ConstContextExtensionPtr context_extension_ptr,
+                                                   uint8_t key,
+                                                   ConstantPtr *constant_out);
+
+/**
  * Returns all keys (represented as u8 values) in the map
  */
 void ergo_lib_context_extension_keys(ConstContextExtensionPtr context_extension_ptr,
@@ -1081,6 +1112,13 @@ void ergo_lib_context_extension_keys(ConstContextExtensionPtr context_extension_
  * Returns the number of elements in the collection
  */
 uintptr_t ergo_lib_context_extension_len(ConstContextExtensionPtr context_extension_ptr);
+
+/**
+ * Set the supplied pair in the ContextExtension
+ */
+void ergo_lib_context_extension_set_pair(ConstConstantPtr constant_ptr,
+                                         uint8_t key,
+                                         ContextExtensionPtr context_extension_ptr);
 
 /**
  * Compiles a contract from ErgoScript source code
@@ -1246,6 +1284,11 @@ void ergo_lib_ergo_box_assets_data_tokens(ConstErgoBoxAssetsDataPtr ergo_box_ass
  */
 void ergo_lib_ergo_box_assets_data_value(ConstErgoBoxAssetsDataPtr ergo_box_assets_data_ptr,
                                          BoxValuePtr *value_out);
+
+/**
+ * Calculate serialized box size(in bytes)
+ */
+uintptr_t ergo_lib_ergo_box_bytes_size(ConstErgoBoxPtr ergo_box_ptr);
 
 /**
  * Get box value in nanoERGs
