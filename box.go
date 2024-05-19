@@ -166,6 +166,8 @@ type BoxCandidate interface {
 	Tree() Tree
 	// BoxValue returns the BoxValue of the BoxCandidate
 	BoxValue() BoxValue
+	// Equals checks if provided BoxCandidate is same
+	Equals(candidate BoxCandidate) bool
 	pointer() C.ErgoBoxCandidatePtr
 }
 
@@ -230,6 +232,11 @@ func (b *boxCandidate) BoxValue() BoxValue {
 	return newBoxValue(bv)
 }
 
+func (b *boxCandidate) Equals(candidate BoxCandidate) bool {
+	res := C.ergo_lib_ergo_box_candidate_eq(b.p, candidate.pointer())
+	return bool(res)
+}
+
 func (b *boxCandidate) pointer() C.ErgoBoxCandidatePtr {
 	return b.p
 }
@@ -257,6 +264,8 @@ type Box interface {
 	Json() (string, error)
 	// JsonEIP12 returns json representation of Box as string according to EIP-12 https://github.com/ergoplatform/eips/pull/23
 	JsonEIP12() (string, error)
+	// Size calculates serialized box size(in bytes)
+	Size() uint32
 	pointer() C.ErgoBoxPtr
 }
 
@@ -396,6 +405,11 @@ func (b *box) JsonEIP12() (string, error) {
 	result := C.GoString(outStr)
 
 	return result, nil
+}
+
+func (b *box) Size() uint32 {
+	res := C.ergo_lib_ergo_box_bytes_size(b.p)
+	return uint32(res)
 }
 
 func (b *box) pointer() C.ErgoBoxPtr {
