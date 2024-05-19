@@ -18,6 +18,8 @@ type Constant interface {
 	Type() (string, error)
 	// Value returns the Constant value as string
 	Value() (string, error)
+	// Int16 extracts int16 value and returns error if wrong Constant type
+	Int16() (int16, error)
 	// Int32 extracts int32 value and returns error if wrong Constant type
 	Int32() (int32, error)
 	// Int64 extracts int64 value and returns error if wrong Constant type
@@ -54,6 +56,14 @@ func NewConstant(s string) (Constant, error) {
 	c := &constant{p}
 
 	return newConstant(c), nil
+}
+
+// NewConstantFromInt16 creates a new Constant from int16 value
+func NewConstantFromInt16(i int16) Constant {
+	var p C.ConstantPtr
+	C.ergo_lib_constant_from_i16(C.int16_t(i), &p)
+	c := &constant{p}
+	return newConstant(c)
 }
 
 // NewConstantFromInt32 creates a new Constant from int32 value
@@ -148,6 +158,15 @@ func (c *constant) Value() (string, error) {
 	}
 
 	return strings.ReplaceAll(C.GoString(constantValueStr), " ", ""), nil
+}
+
+func (c *constant) Int16() (int16, error) {
+	res := C.ergo_lib_constant_to_i16(c.p)
+	err := newError(res.error)
+	if err.isError() {
+		return 0, err.error()
+	}
+	return int16(res.value), nil
 }
 
 func (c *constant) Int32() (int32, error) {

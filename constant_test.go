@@ -60,6 +60,13 @@ func TestNewConstant_TupleExpression(t *testing.T) {
 	assert.Equal(t, "BoundedVec{inner:[102,99]}", constValue)
 }
 
+func TestNewConstantFromInt16(t *testing.T) {
+	testValue := int16(127)
+	c := NewConstantFromInt16(testValue)
+	res, _ := c.Int16()
+	assert.Equal(t, testValue, res)
+}
+
 func TestConstant_Int32(t *testing.T) {
 	testValue := int32(999999999)
 	c := NewConstantFromInt32(testValue)
