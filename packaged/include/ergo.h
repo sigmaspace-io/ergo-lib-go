@@ -1057,7 +1057,7 @@ ErrorPtr ergo_lib_constant_to_bytes(ConstConstantPtr constant_ptr, uint8_t *outp
 ErrorPtr ergo_lib_constant_to_ergo_box(ConstConstantPtr constant_ptr, ErgoBoxPtr *ergo_box_out);
 
 /**
- * Extract i32 value, returning error if wrong type
+ * Extract i16 value, returning error if wrong type
  */
 struct ReturnNum_i16 ergo_lib_constant_to_i16(ConstConstantPtr constant_ptr);
 
