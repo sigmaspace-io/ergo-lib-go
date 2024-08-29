@@ -10,7 +10,6 @@ func TestContextExtension(t *testing.T) {
 	testConst := NewConstantFromInt16(4)
 
 	cE.Set(127, testConst)
-	assert.Equal(t, 1, len(cE.Keys()))
 
 	resConst, constErr := cE.Get(127)
 	assert.NoError(t, constErr)

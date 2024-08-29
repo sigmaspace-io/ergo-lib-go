@@ -5,6 +5,7 @@ package ergo
 */
 import "C"
 import (
+	"iter"
 	"runtime"
 	"unsafe"
 )
@@ -197,6 +198,8 @@ type Tokens interface {
 	Get(index int) (Token, error)
 	// Add adds provided Token to the end of the collection
 	Add(token Token)
+	// All returns an iterator over all Token inside the collection
+	All() iter.Seq2[int, Token]
 	pointer() C.TokensPtr
 }
 
@@ -240,6 +243,20 @@ func (t *tokens) Get(index int) (Token, error) {
 
 func (t *tokens) Add(token Token) {
 	C.ergo_lib_tokens_add(token.pointer(), t.p)
+}
+
+func (t *tokens) All() iter.Seq2[int, Token] {
+	return func(yield func(int, Token) bool) {
+		for i := 0; i < t.Len(); i++ {
+			tk, err := t.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
 }
 
 func (t *tokens) pointer() C.TokensPtr {

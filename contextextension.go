@@ -5,18 +5,23 @@ package ergo
 */
 import "C"
 import (
+	"iter"
 	"runtime"
 	"unsafe"
 )
 
 // ContextExtension represent user-defined variables to be put into context
 type ContextExtension interface {
-	// Keys returns all keys in the map
-	Keys() []byte
+	// Keys returns iterator over all keys in the ContextExtension
+	Keys() iter.Seq[uint8]
 	// Get returns Constant at provided key or nil if it doesn't exist
 	Get(key uint8) (Constant, error)
 	// Set adds Constant at provided key
 	Set(key uint8, constant Constant)
+	// All returns iterator over all key,value pairs in the ContextExtension
+	All() iter.Seq2[uint8, Constant]
+	// Values returns iterator over all Constant in the ContextExtension
+	Values() iter.Seq[Constant]
 	pointer() C.ContextExtensionPtr
 }
 
@@ -37,7 +42,7 @@ func NewContextExtension() ContextExtension {
 	return newContextExtension(c)
 }
 
-func (c *contextExtension) Keys() []byte {
+func (c *contextExtension) Keys() iter.Seq[uint8] {
 	bytesLength := C.ergo_lib_context_extension_len(c.p)
 
 	output := C.malloc(C.uintptr_t(bytesLength))
@@ -47,7 +52,13 @@ func (c *contextExtension) Keys() []byte {
 
 	result := C.GoBytes(unsafe.Pointer(output), C.int(bytesLength))
 
-	return result
+	return func(yield func(uint8) bool) {
+		for i := 0; i < len(result); i++ {
+			if !yield(result[i]) {
+				return
+			}
+		}
+	}
 }
 
 func (c *contextExtension) Get(key uint8) (Constant, error) {
@@ -69,6 +80,34 @@ func (c *contextExtension) Get(key uint8) (Constant, error) {
 
 func (c *contextExtension) Set(key uint8, constant Constant) {
 	C.ergo_lib_context_extension_set_pair(constant.pointer(), C.uint8_t(key), c.p)
+}
+
+func (c *contextExtension) All() iter.Seq2[uint8, Constant] {
+	return func(yield func(uint8, Constant) bool) {
+		for key := range c.Keys() {
+			ce, err := c.Get(key)
+			if err != nil {
+				return
+			}
+			if !yield(key, ce) {
+				return
+			}
+		}
+	}
+}
+
+func (c *contextExtension) Values() iter.Seq[Constant] {
+	return func(yield func(Constant) bool) {
+		for key := range c.Keys() {
+			ce, err := c.Get(key)
+			if err != nil {
+				return
+			}
+			if !yield(ce) {
+				return
+			}
+		}
+	}
 }
 
 func (c *contextExtension) pointer() C.ContextExtensionPtr {

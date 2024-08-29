@@ -5,6 +5,7 @@ package ergo
 */
 import "C"
 import (
+	"iter"
 	"runtime"
 	"unsafe"
 )
@@ -47,9 +48,10 @@ func finalizeByteArray(b *byteArray) {
 }
 
 type ByteArrays interface {
-	Len() uint32
-	Get(index uint32) (ByteArray, error)
+	Len() int
+	Get(index int) (ByteArray, error)
 	Add(byteArray ByteArray)
+	All() iter.Seq2[int, ByteArray]
 	pointer() C.ByteArraysPtr
 }
 
@@ -69,12 +71,12 @@ func NewByteArrays() ByteArrays {
 	return newByteArrays(ba)
 }
 
-func (b *byteArrays) Len() uint32 {
+func (b *byteArrays) Len() int {
 	res := C.ergo_lib_byte_arrays_len(b.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (b *byteArrays) Get(index uint32) (ByteArray, error) {
+func (b *byteArrays) Get(index int) (ByteArray, error) {
 	var p C.ByteArrayPtr
 
 	res := C.ergo_lib_byte_arrays_get(b.p, C.uintptr_t(index), &p)
@@ -93,6 +95,20 @@ func (b *byteArrays) Get(index uint32) (ByteArray, error) {
 
 func (b *byteArrays) Add(byteArray ByteArray) {
 	C.ergo_lib_byte_arrays_add(byteArray.pointer(), b.p)
+}
+
+func (b *byteArrays) All() iter.Seq2[int, ByteArray] {
+	return func(yield func(int, ByteArray) bool) {
+		for i := 0; i < b.Len(); i++ {
+			tk, err := b.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
 }
 
 func (b *byteArrays) pointer() C.ByteArraysPtr {

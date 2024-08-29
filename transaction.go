@@ -5,6 +5,7 @@ package ergo
 */
 import "C"
 import (
+	"iter"
 	"runtime"
 	"unsafe"
 )
@@ -93,9 +94,11 @@ type HintsBag interface {
 	// Add adds CommitmentHint to the bag
 	Add(hint CommitmentHint)
 	// Len returns the length of the HintsBag
-	Len() uint32
+	Len() int
 	// Get returns the CommitmentHint at the provided index if it exists
-	Get(index uint32) (CommitmentHint, error)
+	Get(index int) (CommitmentHint, error)
+	// All returns an iterator over all CommitmentHint inside the collection
+	All() iter.Seq2[int, CommitmentHint]
 	pointer() C.HintsBagPtr
 }
 
@@ -121,12 +124,12 @@ func (h *hintsBag) Add(hint CommitmentHint) {
 	C.ergo_lib_hints_bag_add_commitment(h.p, hint.pointer())
 }
 
-func (h *hintsBag) Len() uint32 {
+func (h *hintsBag) Len() int {
 	res := C.ergo_lib_hints_bag_len(h.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (h *hintsBag) Get(index uint32) (CommitmentHint, error) {
+func (h *hintsBag) Get(index int) (CommitmentHint, error) {
 	var p C.CommitmentHintPtr
 
 	res := C.ergo_lib_hints_bag_get(h.p, C.uintptr_t(index), &p)
@@ -141,6 +144,20 @@ func (h *hintsBag) Get(index uint32) (CommitmentHint, error) {
 	}
 
 	return nil, nil
+}
+
+func (h *hintsBag) All() iter.Seq2[int, CommitmentHint] {
+	return func(yield func(int, CommitmentHint) bool) {
+		for i := 0; i < h.Len(); i++ {
+			tk, err := h.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
 }
 
 func (h *hintsBag) pointer() C.HintsBagPtr {

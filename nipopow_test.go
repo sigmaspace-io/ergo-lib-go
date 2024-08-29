@@ -77,7 +77,7 @@ func TestPoPowHeader(t *testing.T) {
 
 	popow, _ := NewPoPowHeader(json)
 	links, _ := popow.Interlinks()
-	assert.Equal(t, uint32(3), links.Len())
+	assert.Equal(t, 3, links.Len())
 	popowh, _ := popow.Header()
 	testHeader, _ := NewBlockHeader(header)
 	assert.Equal(t, testHeader, popowh)

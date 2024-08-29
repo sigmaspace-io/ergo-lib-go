@@ -5,6 +5,7 @@ package ergo
 */
 import "C"
 import (
+	"iter"
 	"runtime"
 	"unsafe"
 )
@@ -477,11 +478,13 @@ func finalizeBoxAssetsData(b *boxAssetsData) {
 // BoxAssetsDataList is an ordered collection of BoxAssetsData
 type BoxAssetsDataList interface {
 	// Len returns the length of the collection
-	Len() uint32
+	Len() int
 	// Get returns the BoxAssetsData at the provided index if it exists
-	Get(index uint32) (BoxAssetsData, error)
+	Get(index int) (BoxAssetsData, error)
 	// Add adds provided BoxAssetsData to the end of the collection
 	Add(boxAssetsData BoxAssetsData)
+	// All returns an iterator over all BoxAssetsData inside the collection
+	All() iter.Seq2[int, BoxAssetsData]
 	pointer() C.ErgoBoxAssetsDataListPtr
 }
 
@@ -504,12 +507,12 @@ func NewBoxAssetsDataList() BoxAssetsDataList {
 	return newBoxAssetsDataList(b)
 }
 
-func (b *boxAssetsDataList) Len() uint32 {
+func (b *boxAssetsDataList) Len() int {
 	res := C.ergo_lib_ergo_box_assets_data_list_len(b.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (b *boxAssetsDataList) Get(index uint32) (BoxAssetsData, error) {
+func (b *boxAssetsDataList) Get(index int) (BoxAssetsData, error) {
 	var p C.ErgoBoxAssetsDataPtr
 
 	res := C.ergo_lib_ergo_box_assets_data_list_get(b.p, C.uintptr_t(index), &p)
@@ -530,6 +533,20 @@ func (b *boxAssetsDataList) Add(boxAssetsData BoxAssetsData) {
 	C.ergo_lib_ergo_box_assets_data_list_add(boxAssetsData.pointer(), b.p)
 }
 
+func (b *boxAssetsDataList) All() iter.Seq2[int, BoxAssetsData] {
+	return func(yield func(int, BoxAssetsData) bool) {
+		for i := 0; i < b.Len(); i++ {
+			tk, err := b.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
+}
+
 func (b *boxAssetsDataList) pointer() C.ErgoBoxAssetsDataListPtr {
 	return b.p
 }
@@ -541,11 +558,13 @@ func finalizeBoxAssetsDataList(b *boxAssetsDataList) {
 // BoxCandidates is an ordered collection of BoxCandidate
 type BoxCandidates interface {
 	// Len returns the length of the collection
-	Len() uint32
+	Len() int
 	// Get returns the BoxCandidate at the provided index if it exists
-	Get(index uint32) (BoxCandidate, error)
+	Get(index int) (BoxCandidate, error)
 	// Add adds provided BoxCandidate to the end of the collection
 	Add(boxCandidate BoxCandidate)
+	// All returns an iterator over all BoxCandidate inside the collection
+	All() iter.Seq2[int, BoxCandidate]
 	pointer() C.ErgoBoxCandidatesPtr
 }
 
@@ -568,12 +587,12 @@ func NewBoxCandidates() BoxCandidates {
 	return newBoxCandidates(b)
 }
 
-func (b *boxCandidates) Len() uint32 {
+func (b *boxCandidates) Len() int {
 	res := C.ergo_lib_ergo_box_candidates_len(b.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (b *boxCandidates) Get(index uint32) (BoxCandidate, error) {
+func (b *boxCandidates) Get(index int) (BoxCandidate, error) {
 	var p C.ErgoBoxCandidatePtr
 
 	res := C.ergo_lib_ergo_box_candidates_get(b.p, C.uintptr_t(index), &p)
@@ -594,6 +613,20 @@ func (b *boxCandidates) Add(boxCandidate BoxCandidate) {
 	C.ergo_lib_ergo_box_candidates_add(boxCandidate.pointer(), b.p)
 }
 
+func (b *boxCandidates) All() iter.Seq2[int, BoxCandidate] {
+	return func(yield func(int, BoxCandidate) bool) {
+		for i := 0; i < b.Len(); i++ {
+			tk, err := b.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
+}
+
 func (b *boxCandidates) pointer() C.ErgoBoxCandidatesPtr {
 	return b.p
 }
@@ -605,11 +638,13 @@ func finalizeBoxCandidates(b *boxCandidates) {
 // Boxes an ordered collection of Box
 type Boxes interface {
 	// Len returns the length of the collection
-	Len() uint32
+	Len() int
 	// Get returns the Box at the provided index if it exists
-	Get(index uint32) (Box, error)
+	Get(index int) (Box, error)
 	// Add adds provided Box to the end of the collection
 	Add(box Box)
+	// All returns an iterator over all Box inside the collection
+	All() iter.Seq2[int, Box]
 	pointer() C.ErgoBoxesPtr
 }
 
@@ -632,12 +667,12 @@ func NewBoxes() Boxes {
 	return newBoxes(b)
 }
 
-func (b *boxes) Len() uint32 {
+func (b *boxes) Len() int {
 	res := C.ergo_lib_ergo_boxes_len(b.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (b *boxes) Get(index uint32) (Box, error) {
+func (b *boxes) Get(index int) (Box, error) {
 	var p C.ErgoBoxPtr
 
 	res := C.ergo_lib_ergo_boxes_get(b.p, C.uintptr_t(index), &p)
@@ -656,6 +691,20 @@ func (b *boxes) Get(index uint32) (Box, error) {
 
 func (b *boxes) Add(box Box) {
 	C.ergo_lib_ergo_boxes_add(box.pointer(), b.p)
+}
+
+func (b *boxes) All() iter.Seq2[int, Box] {
+	return func(yield func(int, Box) bool) {
+		for i := 0; i < b.Len(); i++ {
+			tk, err := b.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
 }
 
 func (b *boxes) pointer() C.ErgoBoxesPtr {

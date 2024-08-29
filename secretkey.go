@@ -6,6 +6,7 @@ package ergo
 import "C"
 import (
 	"errors"
+	"iter"
 	"runtime"
 	"unsafe"
 )
@@ -84,11 +85,13 @@ func finalizeSecretKey(s *secretKey) {
 // SecretKeys an ordered collection of SecretKey
 type SecretKeys interface {
 	// Len returns the length of the collection
-	Len() uint32
+	Len() int
 	// Get returns the SecretKey at the provided index if it exists
-	Get(index uint32) (SecretKey, error)
+	Get(index int) (SecretKey, error)
 	// Add adds provided SecretKey to the end of the collection
 	Add(secretKey SecretKey)
+	// All returns an iterator over all SecretKey inside the collection
+	All() iter.Seq2[int, SecretKey]
 	pointer() C.SecretKeysPtr
 }
 
@@ -109,12 +112,12 @@ func NewSecretKeys() SecretKeys {
 	return newSecretKeys(s)
 }
 
-func (s *secretKeys) Len() uint32 {
+func (s *secretKeys) Len() int {
 	res := C.ergo_lib_secret_keys_len(s.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (s *secretKeys) Get(index uint32) (SecretKey, error) {
+func (s *secretKeys) Get(index int) (SecretKey, error) {
 	var p C.SecretKeyPtr
 
 	res := C.ergo_lib_secret_keys_get(s.p, C.uintptr_t(index), &p)
@@ -133,6 +136,20 @@ func (s *secretKeys) Get(index uint32) (SecretKey, error) {
 
 func (s *secretKeys) Add(secretKey SecretKey) {
 	C.ergo_lib_secret_keys_add(secretKey.pointer(), s.p)
+}
+
+func (s *secretKeys) All() iter.Seq2[int, SecretKey] {
+	return func(yield func(int, SecretKey) bool) {
+		for i := 0; i < s.Len(); i++ {
+			tk, err := s.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
 }
 
 func (s *secretKeys) pointer() C.SecretKeysPtr {

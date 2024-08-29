@@ -5,6 +5,7 @@ package ergo
 */
 import "C"
 import (
+	"iter"
 	"runtime"
 	"unsafe"
 )
@@ -166,11 +167,13 @@ func finalizeProverResult(pr *proverResult) {
 // UnsignedInputs an ordered collection of UnsignedInput
 type UnsignedInputs interface {
 	// Len returns the length of the collection
-	Len() uint32
+	Len() int
 	// Get returns the UnsignedInput at the provided index if it exists
-	Get(index uint32) (UnsignedInput, error)
+	Get(index int) (UnsignedInput, error)
 	// Add adds provided UnsignedInput to the end of the collection
 	Add(unsignedInput UnsignedInput)
+	// All returns an iterator over all UnsignedInput inside the collection
+	All() iter.Seq2[int, UnsignedInput]
 }
 
 type unsignedInputs struct {
@@ -192,12 +195,12 @@ func NewUnsignedInputs() UnsignedInputs {
 	return newUnsignedInputs(u)
 }
 
-func (u *unsignedInputs) Len() uint32 {
+func (u *unsignedInputs) Len() int {
 	res := C.ergo_lib_unsigned_inputs_len(u.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (u *unsignedInputs) Get(index uint32) (UnsignedInput, error) {
+func (u *unsignedInputs) Get(index int) (UnsignedInput, error) {
 	var p C.UnsignedInputPtr
 
 	res := C.ergo_lib_unsigned_inputs_get(u.p, C.uintptr_t(index), &p)
@@ -218,6 +221,20 @@ func (u *unsignedInputs) Add(unsignedInput UnsignedInput) {
 	C.ergo_lib_unsigned_inputs_add(unsignedInput.pointer(), u.p)
 }
 
+func (u *unsignedInputs) All() iter.Seq2[int, UnsignedInput] {
+	return func(yield func(int, UnsignedInput) bool) {
+		for i := 0; i < u.Len(); i++ {
+			tk, err := u.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
+}
+
 func finalizeUnsignedInputs(u *unsignedInputs) {
 	C.ergo_lib_unsigned_inputs_delete(u.p)
 }
@@ -225,11 +242,13 @@ func finalizeUnsignedInputs(u *unsignedInputs) {
 // Inputs an ordered collection of Input
 type Inputs interface {
 	// Len returns the length of the collection
-	Len() uint32
+	Len() int
 	// Get returns the Input at the provided index if it exists
-	Get(index uint32) (Input, error)
+	Get(index int) (Input, error)
 	// Add adds provided Input to the end of the collection
 	Add(input Input)
+	// All returns an iterator over all Input inside the collection
+	All() iter.Seq2[int, Input]
 }
 
 type inputs struct {
@@ -251,12 +270,12 @@ func NewInputs() Inputs {
 	return newInputs(i)
 }
 
-func (i *inputs) Len() uint32 {
+func (i *inputs) Len() int {
 	res := C.ergo_lib_inputs_len(i.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (i *inputs) Get(index uint32) (Input, error) {
+func (i *inputs) Get(index int) (Input, error) {
 	var p C.InputPtr
 
 	res := C.ergo_lib_inputs_get(i.p, C.uintptr_t(index), &p)
@@ -275,6 +294,20 @@ func (i *inputs) Get(index uint32) (Input, error) {
 
 func (i *inputs) Add(input Input) {
 	C.ergo_lib_inputs_add(input.pointer(), i.p)
+}
+
+func (i *inputs) All() iter.Seq2[int, Input] {
+	return func(yield func(int, Input) bool) {
+		for j := 0; j < i.Len(); j++ {
+			tk, err := i.Get(j)
+			if err != nil {
+				return
+			}
+			if !yield(j, tk) {
+				return
+			}
+		}
+	}
 }
 
 func finalizeInputs(i *inputs) {
