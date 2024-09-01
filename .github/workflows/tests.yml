@@ -32,4 +32,4 @@ jobs:
         run: go test
         env:
           CGO_ENABLED: 1
-          GODEBUG: cgocheck=2
+          GOEXPERIMENT: cgocheck2
