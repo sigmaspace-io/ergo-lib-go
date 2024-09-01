@@ -14,6 +14,8 @@ import (
 type TxId interface {
 	// String returns TxId as string
 	String() (string, error)
+	// Equals checks if provided TxId is same
+	Equals(txId TxId) bool
 	pointer() C.TxIdPtr
 }
 
@@ -56,6 +58,11 @@ func (t *txId) String() (string, error) {
 	defer C.ergo_lib_delete_string(outTxIdStr)
 
 	return C.GoString(outTxIdStr), nil
+}
+
+func (t *txId) Equals(txId TxId) bool {
+	res := C.ergo_lib_tx_id_eq(t.p, txId.pointer())
+	return bool(res)
 }
 
 func (t *txId) pointer() C.TxIdPtr {

@@ -14,6 +14,8 @@ import (
 type BlockHeader interface {
 	// BlockId returns the BlockId of the BlockHeader
 	BlockId() BlockId
+	// Equals checks if provided BlockHeader is same
+	Equals(blockHeader BlockHeader) bool
 	pointer() C.BlockHeaderPtr
 }
 
@@ -55,6 +57,11 @@ func (b *blockHeader) BlockId() BlockId {
 	return newBlockId(bi)
 }
 
+func (b *blockHeader) Equals(blockHeader BlockHeader) bool {
+	res := C.ergo_lib_block_header_eq(b.p, blockHeader.pointer())
+	return bool(res)
+}
+
 func (b *blockHeader) pointer() C.BlockHeaderPtr {
 	return b.p
 }
@@ -65,6 +72,8 @@ func finalizeBlockHeader(b *blockHeader) {
 
 // BlockId represents the id of a BlockHeader
 type BlockId interface {
+	// Equals checks if provided BlockId is same
+	Equals(blockId BlockId) bool
 	pointer() C.BlockIdPtr
 }
 
@@ -94,6 +103,11 @@ func NewBlockId(s string) (BlockId, error) {
 	b := &blockId{p: p}
 
 	return newBlockId(b), nil
+}
+
+func (b *blockId) Equals(blockId BlockId) bool {
+	res := C.ergo_lib_block_id_eq(b.p, blockId.pointer())
+	return bool(res)
 }
 
 func (b *blockId) pointer() C.BlockIdPtr {

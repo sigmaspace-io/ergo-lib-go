@@ -26,6 +26,8 @@ type Constant interface {
 	Int64() (int64, error)
 	// Bytes extracts byte array and returns error if wrong Constant type
 	Bytes() ([]byte, error)
+	// Equals checks if provided Constant is same
+	Equals(constant Constant) bool
 	bytesLength() (int, error)
 	pointer() C.ConstantPtr
 }
@@ -185,6 +187,11 @@ func (c *constant) Int64() (int64, error) {
 		return 0, err.error()
 	}
 	return int64(res.value), nil
+}
+
+func (c *constant) Equals(constant Constant) bool {
+	res := C.ergo_lib_constant_eq(c.p, constant.pointer())
+	return bool(res)
 }
 
 func (c *constant) bytesLength() (int, error) {

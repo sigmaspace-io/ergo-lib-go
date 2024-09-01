@@ -13,6 +13,8 @@ import (
 type Contract interface {
 	// Tree returns the ergo Tree of the Contract
 	Tree() Tree
+	// Equals checks if provided Contract is same
+	Equals(contract Contract) bool
 	pointer() C.ContractPtr
 }
 
@@ -73,6 +75,11 @@ func (c *contract) Tree() Tree {
 	newErgoTree := &tree{p: ergoTreePtr}
 
 	return newTree(newErgoTree)
+}
+
+func (c *contract) Equals(contract Contract) bool {
+	res := C.ergo_lib_contract_eq(c.p, contract.pointer())
+	return bool(res)
 }
 
 func (c *contract) pointer() C.ContractPtr {

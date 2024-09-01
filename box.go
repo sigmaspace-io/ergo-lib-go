@@ -31,6 +31,8 @@ const (
 type BoxId interface {
 	// Base16 returns the BoxId as base16 encoded string
 	Base16() string
+	// Equals checks if provided BoxId is same
+	Equals(boxId BoxId) bool
 	pointer() C.BoxIdPtr
 }
 
@@ -71,6 +73,11 @@ func (b *boxId) Base16() string {
 	return C.GoString(boxIdStr)
 }
 
+func (b *boxId) Equals(boxId BoxId) bool {
+	res := C.ergo_lib_box_id_eq(b.p, boxId.pointer())
+	return bool(res)
+}
+
 func (b *boxId) pointer() C.BoxIdPtr {
 	return b.p
 }
@@ -83,6 +90,8 @@ func finalizeBoxId(b *boxId) {
 type BoxValue interface {
 	// Int64 returns BoxValue value as int64
 	Int64() int64
+	// Equals checks if provided BoxValue is same
+	Equals(boxValue BoxValue) bool
 	pointer() C.BoxValuePtr
 }
 
@@ -113,6 +122,11 @@ func NewBoxValue(value int64) (BoxValue, error) {
 func (b *boxValue) Int64() int64 {
 	value := C.ergo_lib_box_value_as_i64(b.p)
 	return int64(value)
+}
+
+func (b *boxValue) Equals(boxValue BoxValue) bool {
+	res := C.ergo_lib_box_value_eq(b.p, boxValue.pointer())
+	return bool(res)
 }
 
 func (b *boxValue) pointer() C.BoxValuePtr {
@@ -267,6 +281,8 @@ type Box interface {
 	JsonEIP12() (string, error)
 	// Size calculates serialized box size(in bytes)
 	Size() uint32
+	// Equals checks if provided Box is same
+	Equals(box Box) bool
 	pointer() C.ErgoBoxPtr
 }
 
@@ -413,6 +429,11 @@ func (b *box) Size() uint32 {
 	return uint32(res)
 }
 
+func (b *box) Equals(box Box) bool {
+	res := C.ergo_lib_ergo_box_eq(b.p, box.pointer())
+	return bool(res)
+}
+
 func (b *box) pointer() C.ErgoBoxPtr {
 	return b.p
 }
@@ -427,6 +448,8 @@ type BoxAssetsData interface {
 	BoxValue() BoxValue
 	// Tokens returns the Tokens of the BoxAssetsData
 	Tokens() Tokens
+	// Equals checks if provided BoxAssetsData is same
+	Equals(boxAssetsData BoxAssetsData) bool
 	pointer() C.ErgoBoxAssetsDataPtr
 }
 
@@ -465,6 +488,11 @@ func (b *boxAssetsData) Tokens() Tokens {
 	t := &tokens{p: p}
 
 	return newTokens(t)
+}
+
+func (b *boxAssetsData) Equals(boxAssetsData BoxAssetsData) bool {
+	res := C.ergo_lib_ergo_box_assets_data_eq(b.p, boxAssetsData.pointer())
+	return bool(res)
 }
 
 func (b *boxAssetsData) pointer() C.ErgoBoxAssetsDataPtr {
