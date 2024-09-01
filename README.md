@@ -69,6 +69,10 @@ This library makes heavy use of cgo. A set of precompiled shared library objects
       <td>v0.26.0</td>
       <td>v0.26.0</td>
     </tr>
+    <tr>
+      <td>v0.28.0</td>
+      <td>v0.28.0</td>
+    </tr>
   </tbody>
 </table>
 
