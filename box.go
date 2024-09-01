@@ -5,6 +5,7 @@ package ergo
 */
 import "C"
 import (
+	"iter"
 	"runtime"
 	"unsafe"
 )
@@ -30,6 +31,8 @@ const (
 type BoxId interface {
 	// Base16 returns the BoxId as base16 encoded string
 	Base16() string
+	// Equals checks if provided BoxId is same
+	Equals(boxId BoxId) bool
 	pointer() C.BoxIdPtr
 }
 
@@ -70,6 +73,11 @@ func (b *boxId) Base16() string {
 	return C.GoString(boxIdStr)
 }
 
+func (b *boxId) Equals(boxId BoxId) bool {
+	res := C.ergo_lib_box_id_eq(b.p, boxId.pointer())
+	return bool(res)
+}
+
 func (b *boxId) pointer() C.BoxIdPtr {
 	return b.p
 }
@@ -82,6 +90,8 @@ func finalizeBoxId(b *boxId) {
 type BoxValue interface {
 	// Int64 returns BoxValue value as int64
 	Int64() int64
+	// Equals checks if provided BoxValue is same
+	Equals(boxValue BoxValue) bool
 	pointer() C.BoxValuePtr
 }
 
@@ -112,6 +122,11 @@ func NewBoxValue(value int64) (BoxValue, error) {
 func (b *boxValue) Int64() int64 {
 	value := C.ergo_lib_box_value_as_i64(b.p)
 	return int64(value)
+}
+
+func (b *boxValue) Equals(boxValue BoxValue) bool {
+	res := C.ergo_lib_box_value_eq(b.p, boxValue.pointer())
+	return bool(res)
 }
 
 func (b *boxValue) pointer() C.BoxValuePtr {
@@ -166,6 +181,8 @@ type BoxCandidate interface {
 	Tree() Tree
 	// BoxValue returns the BoxValue of the BoxCandidate
 	BoxValue() BoxValue
+	// Equals checks if provided BoxCandidate is same
+	Equals(candidate BoxCandidate) bool
 	pointer() C.ErgoBoxCandidatePtr
 }
 
@@ -230,6 +247,11 @@ func (b *boxCandidate) BoxValue() BoxValue {
 	return newBoxValue(bv)
 }
 
+func (b *boxCandidate) Equals(candidate BoxCandidate) bool {
+	res := C.ergo_lib_ergo_box_candidate_eq(b.p, candidate.pointer())
+	return bool(res)
+}
+
 func (b *boxCandidate) pointer() C.ErgoBoxCandidatePtr {
 	return b.p
 }
@@ -257,6 +279,10 @@ type Box interface {
 	Json() (string, error)
 	// JsonEIP12 returns json representation of Box as string according to EIP-12 https://github.com/ergoplatform/eips/pull/23
 	JsonEIP12() (string, error)
+	// Size calculates serialized box size(in bytes)
+	Size() uint32
+	// Equals checks if provided Box is same
+	Equals(box Box) bool
 	pointer() C.ErgoBoxPtr
 }
 
@@ -398,6 +424,16 @@ func (b *box) JsonEIP12() (string, error) {
 	return result, nil
 }
 
+func (b *box) Size() uint32 {
+	res := C.ergo_lib_ergo_box_bytes_size(b.p)
+	return uint32(res)
+}
+
+func (b *box) Equals(box Box) bool {
+	res := C.ergo_lib_ergo_box_eq(b.p, box.pointer())
+	return bool(res)
+}
+
 func (b *box) pointer() C.ErgoBoxPtr {
 	return b.p
 }
@@ -412,6 +448,8 @@ type BoxAssetsData interface {
 	BoxValue() BoxValue
 	// Tokens returns the Tokens of the BoxAssetsData
 	Tokens() Tokens
+	// Equals checks if provided BoxAssetsData is same
+	Equals(boxAssetsData BoxAssetsData) bool
 	pointer() C.ErgoBoxAssetsDataPtr
 }
 
@@ -452,6 +490,11 @@ func (b *boxAssetsData) Tokens() Tokens {
 	return newTokens(t)
 }
 
+func (b *boxAssetsData) Equals(boxAssetsData BoxAssetsData) bool {
+	res := C.ergo_lib_ergo_box_assets_data_eq(b.p, boxAssetsData.pointer())
+	return bool(res)
+}
+
 func (b *boxAssetsData) pointer() C.ErgoBoxAssetsDataPtr {
 	return b.p
 }
@@ -463,11 +506,13 @@ func finalizeBoxAssetsData(b *boxAssetsData) {
 // BoxAssetsDataList is an ordered collection of BoxAssetsData
 type BoxAssetsDataList interface {
 	// Len returns the length of the collection
-	Len() uint32
+	Len() int
 	// Get returns the BoxAssetsData at the provided index if it exists
-	Get(index uint32) (BoxAssetsData, error)
+	Get(index int) (BoxAssetsData, error)
 	// Add adds provided BoxAssetsData to the end of the collection
 	Add(boxAssetsData BoxAssetsData)
+	// All returns an iterator over all BoxAssetsData inside the collection
+	All() iter.Seq2[int, BoxAssetsData]
 	pointer() C.ErgoBoxAssetsDataListPtr
 }
 
@@ -490,12 +535,12 @@ func NewBoxAssetsDataList() BoxAssetsDataList {
 	return newBoxAssetsDataList(b)
 }
 
-func (b *boxAssetsDataList) Len() uint32 {
+func (b *boxAssetsDataList) Len() int {
 	res := C.ergo_lib_ergo_box_assets_data_list_len(b.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (b *boxAssetsDataList) Get(index uint32) (BoxAssetsData, error) {
+func (b *boxAssetsDataList) Get(index int) (BoxAssetsData, error) {
 	var p C.ErgoBoxAssetsDataPtr
 
 	res := C.ergo_lib_ergo_box_assets_data_list_get(b.p, C.uintptr_t(index), &p)
@@ -516,6 +561,20 @@ func (b *boxAssetsDataList) Add(boxAssetsData BoxAssetsData) {
 	C.ergo_lib_ergo_box_assets_data_list_add(boxAssetsData.pointer(), b.p)
 }
 
+func (b *boxAssetsDataList) All() iter.Seq2[int, BoxAssetsData] {
+	return func(yield func(int, BoxAssetsData) bool) {
+		for i := 0; i < b.Len(); i++ {
+			tk, err := b.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
+}
+
 func (b *boxAssetsDataList) pointer() C.ErgoBoxAssetsDataListPtr {
 	return b.p
 }
@@ -527,11 +586,13 @@ func finalizeBoxAssetsDataList(b *boxAssetsDataList) {
 // BoxCandidates is an ordered collection of BoxCandidate
 type BoxCandidates interface {
 	// Len returns the length of the collection
-	Len() uint32
+	Len() int
 	// Get returns the BoxCandidate at the provided index if it exists
-	Get(index uint32) (BoxCandidate, error)
+	Get(index int) (BoxCandidate, error)
 	// Add adds provided BoxCandidate to the end of the collection
 	Add(boxCandidate BoxCandidate)
+	// All returns an iterator over all BoxCandidate inside the collection
+	All() iter.Seq2[int, BoxCandidate]
 	pointer() C.ErgoBoxCandidatesPtr
 }
 
@@ -554,12 +615,12 @@ func NewBoxCandidates() BoxCandidates {
 	return newBoxCandidates(b)
 }
 
-func (b *boxCandidates) Len() uint32 {
+func (b *boxCandidates) Len() int {
 	res := C.ergo_lib_ergo_box_candidates_len(b.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (b *boxCandidates) Get(index uint32) (BoxCandidate, error) {
+func (b *boxCandidates) Get(index int) (BoxCandidate, error) {
 	var p C.ErgoBoxCandidatePtr
 
 	res := C.ergo_lib_ergo_box_candidates_get(b.p, C.uintptr_t(index), &p)
@@ -580,6 +641,20 @@ func (b *boxCandidates) Add(boxCandidate BoxCandidate) {
 	C.ergo_lib_ergo_box_candidates_add(boxCandidate.pointer(), b.p)
 }
 
+func (b *boxCandidates) All() iter.Seq2[int, BoxCandidate] {
+	return func(yield func(int, BoxCandidate) bool) {
+		for i := 0; i < b.Len(); i++ {
+			tk, err := b.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
+}
+
 func (b *boxCandidates) pointer() C.ErgoBoxCandidatesPtr {
 	return b.p
 }
@@ -591,11 +666,13 @@ func finalizeBoxCandidates(b *boxCandidates) {
 // Boxes an ordered collection of Box
 type Boxes interface {
 	// Len returns the length of the collection
-	Len() uint32
+	Len() int
 	// Get returns the Box at the provided index if it exists
-	Get(index uint32) (Box, error)
+	Get(index int) (Box, error)
 	// Add adds provided Box to the end of the collection
 	Add(box Box)
+	// All returns an iterator over all Box inside the collection
+	All() iter.Seq2[int, Box]
 	pointer() C.ErgoBoxesPtr
 }
 
@@ -618,12 +695,12 @@ func NewBoxes() Boxes {
 	return newBoxes(b)
 }
 
-func (b *boxes) Len() uint32 {
+func (b *boxes) Len() int {
 	res := C.ergo_lib_ergo_boxes_len(b.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (b *boxes) Get(index uint32) (Box, error) {
+func (b *boxes) Get(index int) (Box, error) {
 	var p C.ErgoBoxPtr
 
 	res := C.ergo_lib_ergo_boxes_get(b.p, C.uintptr_t(index), &p)
@@ -642,6 +719,20 @@ func (b *boxes) Get(index uint32) (Box, error) {
 
 func (b *boxes) Add(box Box) {
 	C.ergo_lib_ergo_boxes_add(box.pointer(), b.p)
+}
+
+func (b *boxes) All() iter.Seq2[int, Box] {
+	return func(yield func(int, Box) bool) {
+		for i := 0; i < b.Len(); i++ {
+			tk, err := b.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
 }
 
 func (b *boxes) pointer() C.ErgoBoxesPtr {

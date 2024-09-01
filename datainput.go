@@ -4,7 +4,10 @@ package ergo
 #include "ergo.h"
 */
 import "C"
-import "runtime"
+import (
+	"iter"
+	"runtime"
+)
 
 // DataInput represent inputs that are used to enrich script context, but won't be spent by the transaction
 type DataInput interface {
@@ -48,11 +51,13 @@ func finalizeDataInput(d *dataInput) {
 // DataInputs an ordered collection if DataInput
 type DataInputs interface {
 	// Len returns the length of the collection
-	Len() uint32
+	Len() int
 	// Get returns the Input at the provided index if it exists
-	Get(index uint32) (DataInput, error)
+	Get(index int) (DataInput, error)
 	// Add adds provided DataInput to the end of the collection
 	Add(dataInput DataInput)
+	// All returns an iterator over all DataInput inside the collection
+	All() iter.Seq2[int, DataInput]
 	pointer() C.DataInputsPtr
 }
 
@@ -73,12 +78,12 @@ func NewDataInputs() DataInputs {
 	return newDataInputs(d)
 }
 
-func (d *dataInputs) Len() uint32 {
+func (d *dataInputs) Len() int {
 	res := C.ergo_lib_data_inputs_len(d.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (d *dataInputs) Get(index uint32) (DataInput, error) {
+func (d *dataInputs) Get(index int) (DataInput, error) {
 	var p C.DataInputPtr
 
 	res := C.ergo_lib_data_inputs_get(d.p, C.uintptr_t(index), &p)
@@ -97,6 +102,20 @@ func (d *dataInputs) Get(index uint32) (DataInput, error) {
 
 func (d *dataInputs) Add(dataInput DataInput) {
 	C.ergo_lib_data_inputs_add(dataInput.pointer(), d.p)
+}
+
+func (d *dataInputs) All() iter.Seq2[int, DataInput] {
+	return func(yield func(int, DataInput) bool) {
+		for i := 0; i < d.Len(); i++ {
+			tk, err := d.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
 }
 
 func (d *dataInputs) pointer() C.DataInputsPtr {

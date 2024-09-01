@@ -27,6 +27,8 @@ type Tree interface {
 	Constant(index int) (Constant, error)
 	// Constants returns all Constant within the Tree or throws error if the parsing of constants failed
 	Constants() ([]Constant, error)
+	// Equals checks if provided Tree is same
+	Equals(tree Tree) bool
 	pointer() C.ErgoTreePtr
 }
 
@@ -169,6 +171,11 @@ func (t *tree) Constants() ([]Constant, error) {
 		constants = append(constants, ergoTreeConstant)
 	}
 	return constants, nil
+}
+
+func (t *tree) Equals(tree Tree) bool {
+	res := C.ergo_lib_ergo_tree_eq(t.p, tree.pointer())
+	return bool(res)
 }
 
 func (t *tree) pointer() C.ErgoTreePtr {

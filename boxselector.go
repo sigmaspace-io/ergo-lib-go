@@ -12,6 +12,8 @@ type BoxSelection interface {
 	Boxes() Boxes
 	// ChangeBoxes returns selected boxes to use as change
 	ChangeBoxes() BoxAssetsDataList
+	// Equals checks if provided BoxSelection is same
+	Equals(boxSelection BoxSelection) bool
 	pointer() C.BoxSelectionPtr
 }
 
@@ -44,6 +46,11 @@ func (b *boxSelection) ChangeBoxes() BoxAssetsDataList {
 	C.ergo_lib_box_selection_change(b.p, &p)
 	ba := &boxAssetsDataList{p: p}
 	return newBoxAssetsDataList(ba)
+}
+
+func (b *boxSelection) Equals(boxSelection BoxSelection) bool {
+	res := C.ergo_lib_box_selection_eq(b.p, boxSelection.pointer())
+	return bool(res)
 }
 
 func (b *boxSelection) pointer() C.BoxSelectionPtr {

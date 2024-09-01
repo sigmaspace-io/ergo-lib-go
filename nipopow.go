@@ -153,6 +153,9 @@ type PoPowHeader interface {
 	CheckInterlinksProof() bool
 	// Json returns json representation of PoPowHeader as string
 	Json() (string, error)
+	// Equals checks if provided PoPowHeader is same
+	Equals(poPowHeader PoPowHeader) bool
+	pointer() C.PoPowHeaderPtr
 }
 
 type poPowHeader struct {
@@ -234,6 +237,15 @@ func (p *poPowHeader) Json() (string, error) {
 	result := C.GoString(outStr)
 
 	return result, nil
+}
+
+func (p *poPowHeader) Equals(poPowHeader PoPowHeader) bool {
+	res := C.ergo_lib_po_pow_header_eq(p.p, poPowHeader.pointer())
+	return bool(res)
+}
+
+func (p *poPowHeader) pointer() C.PoPowHeaderPtr {
+	return p.p
 }
 
 func finalizePoPowHeader(p *poPowHeader) {

@@ -8,6 +8,8 @@ import "runtime"
 
 // PreHeader represents a block header with the current SpendingTransaction, that can be predicted by a miner before its formation
 type PreHeader interface {
+	// Equals checks if provided PreHeader is same
+	Equals(preHeader PreHeader) bool
 	pointer() C.PreHeaderPtr
 }
 
@@ -29,6 +31,11 @@ func NewPreHeader(header BlockHeader) PreHeader {
 	ph := &preHeader{p: p}
 
 	return newPreHeader(ph)
+}
+
+func (h *preHeader) Equals(preHeader PreHeader) bool {
+	res := C.ergo_lib_pre_header_eq(h.p, preHeader.pointer())
+	return bool(res)
 }
 
 func (h *preHeader) pointer() C.PreHeaderPtr {

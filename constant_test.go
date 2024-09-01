@@ -60,26 +60,32 @@ func TestNewConstant_TupleExpression(t *testing.T) {
 	assert.Equal(t, "BoundedVec{inner:[102,99]}", constValue)
 }
 
-func TestNewConstantFromInt32(t *testing.T) {
-	c := NewConstantFromInt32(999999999)
-	encoded, _ := c.Base16()
-	decoded, _ := NewConstant(encoded)
-	assert.Equal(t, c, decoded)
+func TestNewConstantFromInt16(t *testing.T) {
+	testValue := int16(127)
+	c := NewConstantFromInt16(testValue)
+	res, _ := c.Int16()
+	assert.Equal(t, testValue, res)
 }
 
-func TestNewConstantFromInt64(t *testing.T) {
-	c := NewConstantFromInt64(9223372036854775807)
-	encoded, _ := c.Base16()
-	decoded, _ := NewConstant(encoded)
-	assert.Equal(t, c, decoded)
+func TestConstant_Int32(t *testing.T) {
+	testValue := int32(999999999)
+	c := NewConstantFromInt32(testValue)
+	res, _ := c.Int32()
+	assert.Equal(t, testValue, res)
 }
 
-func TestNewConstantFromBytes(t *testing.T) {
+func TestConstant_Int64(t *testing.T) {
+	testValue := int64(9223372036854775807)
+	c := NewConstantFromInt64(testValue)
+	res, _ := c.Int64()
+	assert.Equal(t, testValue, res)
+}
+
+func TestConstant_Bytes(t *testing.T) {
 	b := []byte{1, 1, 2, 255}
 	c, _ := NewConstantFromBytes(b)
-	encoded, _ := c.Base16()
-	decoded, _ := NewConstant(encoded)
-	assert.Equal(t, c, decoded)
+	res, _ := c.Bytes()
+	assert.Equal(t, b, res)
 }
 
 func TestNewConstantFromECPointBytes(t *testing.T) {

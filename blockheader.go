@@ -5,6 +5,7 @@ package ergo
 */
 import "C"
 import (
+	"iter"
 	"runtime"
 	"unsafe"
 )
@@ -13,6 +14,8 @@ import (
 type BlockHeader interface {
 	// BlockId returns the BlockId of the BlockHeader
 	BlockId() BlockId
+	// Equals checks if provided BlockHeader is same
+	Equals(blockHeader BlockHeader) bool
 	pointer() C.BlockHeaderPtr
 }
 
@@ -54,6 +57,11 @@ func (b *blockHeader) BlockId() BlockId {
 	return newBlockId(bi)
 }
 
+func (b *blockHeader) Equals(blockHeader BlockHeader) bool {
+	res := C.ergo_lib_block_header_eq(b.p, blockHeader.pointer())
+	return bool(res)
+}
+
 func (b *blockHeader) pointer() C.BlockHeaderPtr {
 	return b.p
 }
@@ -64,6 +72,8 @@ func finalizeBlockHeader(b *blockHeader) {
 
 // BlockId represents the id of a BlockHeader
 type BlockId interface {
+	// Equals checks if provided BlockId is same
+	Equals(blockId BlockId) bool
 	pointer() C.BlockIdPtr
 }
 
@@ -95,6 +105,11 @@ func NewBlockId(s string) (BlockId, error) {
 	return newBlockId(b), nil
 }
 
+func (b *blockId) Equals(blockId BlockId) bool {
+	res := C.ergo_lib_block_id_eq(b.p, blockId.pointer())
+	return bool(res)
+}
+
 func (b *blockId) pointer() C.BlockIdPtr {
 	return b.p
 }
@@ -106,11 +121,13 @@ func finalizeBlockId(b *blockId) {
 // BlockHeaders an ordered collection of BlockHeader
 type BlockHeaders interface {
 	// Len returns the length of the collection
-	Len() uint32
+	Len() int
 	// Get returns the BlockHeader at the provided index if it exists
-	Get(index uint32) (BlockHeader, error)
+	Get(index int) (BlockHeader, error)
 	// Add adds provided BlockHeader to the end of the collection
 	Add(blockHeader BlockHeader)
+	// All returns an iterator over all BlockHeader inside the collection
+	All() iter.Seq2[int, BlockHeader]
 	pointer() C.BlockHeadersPtr
 }
 
@@ -132,12 +149,12 @@ func NewBlockHeaders() BlockHeaders {
 	return newBlockHeaders(b)
 }
 
-func (b *blockHeaders) Len() uint32 {
+func (b *blockHeaders) Len() int {
 	res := C.ergo_lib_block_headers_len(b.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (b *blockHeaders) Get(index uint32) (BlockHeader, error) {
+func (b *blockHeaders) Get(index int) (BlockHeader, error) {
 	var p C.BlockHeaderPtr
 
 	res := C.ergo_lib_block_headers_get(b.p, C.uintptr_t(index), &p)
@@ -158,6 +175,20 @@ func (b *blockHeaders) Add(blockHeader BlockHeader) {
 	C.ergo_lib_block_headers_add(blockHeader.pointer(), b.p)
 }
 
+func (b *blockHeaders) All() iter.Seq2[int, BlockHeader] {
+	return func(yield func(int, BlockHeader) bool) {
+		for i := 0; i < b.Len(); i++ {
+			tk, err := b.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
+}
+
 func (b *blockHeaders) pointer() C.BlockHeadersPtr {
 	return b.p
 }
@@ -169,11 +200,13 @@ func finalizeBlockHeaders(b *blockHeaders) {
 // BlockIds an ordered collection of BlockId
 type BlockIds interface {
 	// Len returns the length of the collection
-	Len() uint32
+	Len() int
 	// Get returns the BlockId at the provided index if it exists
-	Get(index uint32) (BlockId, error)
+	Get(index int) (BlockId, error)
 	// Add adds provided BlockId to the end of the collection
 	Add(blockId BlockId)
+	// All returns an iterator over all BlockId inside the collection
+	All() iter.Seq2[int, BlockId]
 }
 
 type blockIds struct {
@@ -195,12 +228,12 @@ func NewBlockIds() BlockIds {
 	return newBlockIds(b)
 }
 
-func (b *blockIds) Len() uint32 {
+func (b *blockIds) Len() int {
 	res := C.ergo_lib_block_ids_len(b.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (b *blockIds) Get(index uint32) (BlockId, error) {
+func (b *blockIds) Get(index int) (BlockId, error) {
 	var p C.BlockIdPtr
 
 	res := C.ergo_lib_block_ids_get(b.p, C.uintptr_t(index), &p)
@@ -219,6 +252,20 @@ func (b *blockIds) Get(index uint32) (BlockId, error) {
 
 func (b *blockIds) Add(blockId BlockId) {
 	C.ergo_lib_block_ids_add(blockId.pointer(), b.p)
+}
+
+func (b *blockIds) All() iter.Seq2[int, BlockId] {
+	return func(yield func(int, BlockId) bool) {
+		for i := 0; i < b.Len(); i++ {
+			tk, err := b.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
 }
 
 func finalizeBlockIds(b *blockIds) {

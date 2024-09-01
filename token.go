@@ -5,6 +5,7 @@ package ergo
 */
 import "C"
 import (
+	"iter"
 	"runtime"
 	"unsafe"
 )
@@ -13,6 +14,8 @@ import (
 type TokenId interface {
 	// Base16 returns the TokenId as base16 encoded string
 	Base16() string
+	// Equals checks if provided TokenId is same
+	Equals(tokenId TokenId) bool
 	pointer() C.TokenIdPtr
 }
 
@@ -52,6 +55,11 @@ func NewTokenIdFromBoxId(boxId BoxId) TokenId {
 	return newTokenId(t)
 }
 
+func (t *tokenId) Equals(tokenId TokenId) bool {
+	res := C.ergo_lib_token_id_eq(t.p, tokenId.pointer())
+	return bool(res)
+}
+
 func finalizeTokenId(t *tokenId) {
 	C.ergo_lib_token_id_delete(t.p)
 }
@@ -75,6 +83,8 @@ func (t *tokenId) pointer() C.TokenIdPtr {
 type TokenAmount interface {
 	// Int64 converts TokenAmount to int64
 	Int64() int64
+	// Equals checks if provided TokenAmount is same
+	Equals(tokenAmount TokenAmount) bool
 	pointer() C.TokenAmountPtr
 }
 
@@ -108,6 +118,11 @@ func (t *tokenAmount) Int64() int64 {
 	return int64(amount)
 }
 
+func (t *tokenAmount) Equals(tokenAmount TokenAmount) bool {
+	res := C.ergo_lib_token_amount_eq(t.p, tokenAmount.pointer())
+	return bool(res)
+}
+
 func (t *tokenAmount) pointer() C.TokenAmountPtr {
 	return t.p
 }
@@ -124,6 +139,8 @@ type Token interface {
 	Amount() TokenAmount
 	// JsonEIP12 returns json representation of Token as string according to EIP-12 https://github.com/ergoplatform/eips/pull/23
 	JsonEIP12() (string, error)
+	// Equals checks if provided Token is same
+	Equals(token Token) bool
 	pointer() C.TokenPtr
 }
 
@@ -181,6 +198,11 @@ func (t *token) JsonEIP12() (string, error) {
 	return result, nil
 }
 
+func (t *token) Equals(token Token) bool {
+	res := C.ergo_lib_token_eq(t.p, token.pointer())
+	return bool(res)
+}
+
 func (t *token) pointer() C.TokenPtr {
 	return t.p
 }
@@ -197,6 +219,8 @@ type Tokens interface {
 	Get(index int) (Token, error)
 	// Add adds provided Token to the end of the collection
 	Add(token Token)
+	// All returns an iterator over all Token inside the collection
+	All() iter.Seq2[int, Token]
 	pointer() C.TokensPtr
 }
 
@@ -240,6 +264,20 @@ func (t *tokens) Get(index int) (Token, error) {
 
 func (t *tokens) Add(token Token) {
 	C.ergo_lib_tokens_add(token.pointer(), t.p)
+}
+
+func (t *tokens) All() iter.Seq2[int, Token] {
+	return func(yield func(int, Token) bool) {
+		for i := 0; i < t.Len(); i++ {
+			tk, err := t.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
 }
 
 func (t *tokens) pointer() C.TokensPtr {

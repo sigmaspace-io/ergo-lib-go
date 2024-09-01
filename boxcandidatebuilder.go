@@ -25,7 +25,7 @@ type BoxCandidateBuilder interface {
 	CalcMinBoxValue() (BoxValue, error)
 	// SetRegisterValue sets register with a given id (R4 - R9) to the given value
 	SetRegisterValue(registerId nonMandatoryRegisterId, constant Constant)
-	//RegisterValue returns register value for the given register id (R4-R9), or nil if the register is empty
+	// RegisterValue returns register value for the given register id (R4 - R9), or nil if the register is empty
 	RegisterValue(registerId nonMandatoryRegisterId) (Constant, error)
 	// DeleteRegisterValue deletes register value(make register empty) for the given register id (R4 - R9)
 	DeleteRegisterValue(registerId nonMandatoryRegisterId)

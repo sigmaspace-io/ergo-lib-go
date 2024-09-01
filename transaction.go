@@ -5,6 +5,7 @@ package ergo
 */
 import "C"
 import (
+	"iter"
 	"runtime"
 	"unsafe"
 )
@@ -13,6 +14,8 @@ import (
 type TxId interface {
 	// String returns TxId as string
 	String() (string, error)
+	// Equals checks if provided TxId is same
+	Equals(txId TxId) bool
 	pointer() C.TxIdPtr
 }
 
@@ -57,6 +60,11 @@ func (t *txId) String() (string, error) {
 	return C.GoString(outTxIdStr), nil
 }
 
+func (t *txId) Equals(txId TxId) bool {
+	res := C.ergo_lib_tx_id_eq(t.p, txId.pointer())
+	return bool(res)
+}
+
 func (t *txId) pointer() C.TxIdPtr {
 	return t.p
 }
@@ -93,9 +101,11 @@ type HintsBag interface {
 	// Add adds CommitmentHint to the bag
 	Add(hint CommitmentHint)
 	// Len returns the length of the HintsBag
-	Len() uint32
+	Len() int
 	// Get returns the CommitmentHint at the provided index if it exists
-	Get(index uint32) (CommitmentHint, error)
+	Get(index int) (CommitmentHint, error)
+	// All returns an iterator over all CommitmentHint inside the collection
+	All() iter.Seq2[int, CommitmentHint]
 	pointer() C.HintsBagPtr
 }
 
@@ -121,12 +131,12 @@ func (h *hintsBag) Add(hint CommitmentHint) {
 	C.ergo_lib_hints_bag_add_commitment(h.p, hint.pointer())
 }
 
-func (h *hintsBag) Len() uint32 {
+func (h *hintsBag) Len() int {
 	res := C.ergo_lib_hints_bag_len(h.p)
-	return uint32(res)
+	return int(res)
 }
 
-func (h *hintsBag) Get(index uint32) (CommitmentHint, error) {
+func (h *hintsBag) Get(index int) (CommitmentHint, error) {
 	var p C.CommitmentHintPtr
 
 	res := C.ergo_lib_hints_bag_get(h.p, C.uintptr_t(index), &p)
@@ -141,6 +151,20 @@ func (h *hintsBag) Get(index uint32) (CommitmentHint, error) {
 	}
 
 	return nil, nil
+}
+
+func (h *hintsBag) All() iter.Seq2[int, CommitmentHint] {
+	return func(yield func(int, CommitmentHint) bool) {
+		for i := 0; i < h.Len(); i++ {
+			tk, err := h.Get(i)
+			if err != nil {
+				return
+			}
+			if !yield(i, tk) {
+				return
+			}
+		}
+	}
 }
 
 func (h *hintsBag) pointer() C.HintsBagPtr {
@@ -361,6 +385,8 @@ type Transaction interface {
 	Json() (string, error)
 	// JsonEIP12 returns json representation of Transaction as string according to EIP-12 https://github.com/ergoplatform/eips/pull/23
 	JsonEIP12() (string, error)
+	// Validate validates the current Transaction
+	Validate(stateContext StateContext, boxesToSpent Boxes, dataBoxes Boxes) error
 	pointer() C.TransactionPtr
 }
 
@@ -472,6 +498,15 @@ func (t *transaction) JsonEIP12() (string, error) {
 	result := C.GoString(outStr)
 
 	return result, nil
+}
+
+func (t *transaction) Validate(stateContext StateContext, boxesToSpent Boxes, dataBoxes Boxes) error {
+	errPtr := C.ergo_lib_tx_validate(t.p, stateContext.pointer(), boxesToSpent.pointer(), dataBoxes.pointer())
+	err := newError(errPtr)
+	if err.isError() {
+		return err.error()
+	}
+	return nil
 }
 
 func (t *transaction) pointer() C.TransactionPtr {

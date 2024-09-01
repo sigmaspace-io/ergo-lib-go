@@ -140,6 +140,8 @@ typedef struct Contract Contract;
  */
 typedef struct DataInput DataInput;
 
+typedef struct DerivationPath DerivationPath;
+
 /**
  * Ergo box, that is taking part in some transaction on the chain Differs with [`ErgoBoxCandidate`]
  * by added transaction id and an index in the input of that transaction
@@ -174,6 +176,8 @@ typedef struct ErgoStateContext ErgoStateContext;
 typedef struct ErgoTree ErgoTree;
 
 typedef struct Error Error;
+
+typedef struct ExtPubKey ExtPubKey;
 
 typedef struct ExtSecretKey ExtSecretKey;
 
@@ -212,6 +216,11 @@ typedef struct NodeConf NodeConf;
 #if defined(ERGO_REST)
 typedef struct NodeInfo NodeInfo;
 #endif
+
+/**
+ * Blockchain parameters
+ */
+typedef struct Parameters Parameters;
 
 typedef struct PoPowHeader PoPowHeader;
 
@@ -326,6 +335,8 @@ typedef const struct ErgoTree *ConstErgoTreePtr;
 
 typedef const struct Address *ConstAddressPtr;
 
+typedef struct ErgoTree *ErgoTreePtr;
+
 typedef struct BatchMerkleProof *BatchMerkleProofPtr;
 
 typedef const struct BatchMerkleProof *ConstBatchMerkleProofPtr;
@@ -424,6 +435,18 @@ typedef struct ErgoBox *ErgoBoxPtr;
  * Convenience type to allow us to pass Rust enums with `u8` representation through FFI to the C
  * side.
  */
+typedef struct ReturnNum_i16 {
+  /**
+   * Returned value. Note that it's only valid if the error field is null!
+   */
+  int16_t value;
+  ErrorPtr error;
+} ReturnNum_i16;
+
+/**
+ * Convenience type to allow us to pass Rust enums with `u8` representation through FFI to the C
+ * side.
+ */
 typedef struct ReturnNum_i32 {
   /**
    * Returned value. Note that it's only valid if the error field is null!
@@ -452,8 +475,6 @@ typedef struct Contract *ContractPtr;
 
 typedef const struct Contract *ConstContractPtr;
 
-typedef struct ErgoTree *ErgoTreePtr;
-
 typedef const struct DataInput *ConstDataInputPtr;
 
 typedef struct DataInput *DataInputPtr;
@@ -465,6 +486,10 @@ typedef CollectionPtr_DataInput DataInputsPtr;
 typedef const struct Collection_DataInput *ConstCollectionPtr_DataInput;
 
 typedef ConstCollectionPtr_DataInput ConstDataInputsPtr;
+
+typedef struct DerivationPath *DerivationPathPtr;
+
+typedef const struct DerivationPath *ConstDerivationPathPtr;
 
 typedef struct ErgoBoxAssetsData *ErgoBoxAssetsDataPtr;
 
@@ -512,9 +537,17 @@ typedef const struct ErgoStateContext *ConstErgoStateContextPtr;
 
 typedef const struct PreHeader *ConstPreHeaderPtr;
 
+typedef const struct Parameters *ConstParametersPtr;
+
+typedef const struct ExtPubKey *ConstExtPubKeyPtr;
+
+typedef struct ExtPubKey *ExtPubKeyPtr;
+
 typedef const struct ExtSecretKey *ConstExtSecretKeyPtr;
 
 typedef struct ExtSecretKey *ExtSecretKeyPtr;
+
+typedef struct SecretKey *SecretKeyPtr;
 
 typedef struct HintsBag *HintsBagPtr;
 
@@ -577,6 +610,8 @@ typedef struct NodeConf *NodeConfPtr;
 typedef struct NodeInfo *NodeInfoPtr;
 #endif
 
+typedef struct Parameters *ParametersPtr;
+
 typedef const struct PoPowHeader *ConstPoPowHeaderPtr;
 
 typedef struct PreHeader *PreHeaderPtr;
@@ -621,8 +656,6 @@ typedef struct CompletionCallback {
 #if defined(ERGO_REST)
 typedef struct RequestHandle *RequestHandlePtr;
 #endif
-
-typedef struct SecretKey *SecretKeyPtr;
 
 typedef const struct SecretKey *ConstSecretKeyPtr;
 
@@ -696,11 +729,17 @@ ErrorPtr ergo_lib_address_from_ergo_tree(ConstErgoTreePtr ergo_tree_ptr, Address
 
 ErrorPtr ergo_lib_address_from_mainnet(const char *address_str, AddressPtr *address_out);
 
+ErrorPtr ergo_lib_address_from_public_key(const uint8_t *bytes_ptr,
+                                          uintptr_t len,
+                                          AddressPtr *address_out);
+
 ErrorPtr ergo_lib_address_from_testnet(const char *address_str, AddressPtr *address_out);
 
 void ergo_lib_address_to_base58(ConstAddressPtr address,
                                 NetworkPrefix network_prefix,
                                 const char **_address_str);
+
+void ergo_lib_address_to_ergo_tree(ConstAddressPtr address, ErgoTreePtr *ergo_tree_out);
 
 uint8_t ergo_lib_address_type_prefix(ConstAddressPtr address);
 
@@ -985,6 +1024,11 @@ ErrorPtr ergo_lib_constant_from_ecpoint_bytes(const uint8_t *bytes_ptr,
 void ergo_lib_constant_from_ergo_box(ConstErgoBoxPtr ergo_box_ptr, ConstantPtr *constant_out);
 
 /**
+ * Create from i16 value
+ */
+void ergo_lib_constant_from_i16(int16_t value, ConstantPtr *constant_out);
+
+/**
  * Create from i32 value
  */
 void ergo_lib_constant_from_i32(int32_t value, ConstantPtr *constant_out);
@@ -1011,6 +1055,11 @@ ErrorPtr ergo_lib_constant_to_bytes(ConstConstantPtr constant_ptr, uint8_t *outp
  * Extract ErgoBox value, returning error if wrong type
  */
 ErrorPtr ergo_lib_constant_to_ergo_box(ConstConstantPtr constant_ptr, ErgoBoxPtr *ergo_box_out);
+
+/**
+ * Extract i16 value, returning error if wrong type
+ */
+struct ReturnNum_i16 ergo_lib_constant_to_i16(ConstConstantPtr constant_ptr);
 
 /**
  * Extract i32 value, returning error if wrong type
@@ -1045,6 +1094,15 @@ void ergo_lib_context_extension_delete(ContextExtensionPtr ptr);
 void ergo_lib_context_extension_empty(ContextExtensionPtr *context_extension_out);
 
 /**
+ * Returns constant with given key
+ * or None if key doesn't exist
+ * or error if constants parsing were failed
+ */
+struct ReturnOption ergo_lib_context_extension_get(ConstContextExtensionPtr context_extension_ptr,
+                                                   uint8_t key,
+                                                   ConstantPtr *constant_out);
+
+/**
  * Returns all keys (represented as u8 values) in the map
  */
 void ergo_lib_context_extension_keys(ConstContextExtensionPtr context_extension_ptr,
@@ -1054,6 +1112,13 @@ void ergo_lib_context_extension_keys(ConstContextExtensionPtr context_extension_
  * Returns the number of elements in the collection
  */
 uintptr_t ergo_lib_context_extension_len(ConstContextExtensionPtr context_extension_ptr);
+
+/**
+ * Set the supplied pair in the ContextExtension
+ */
+void ergo_lib_context_extension_set_pair(ConstConstantPtr constant_ptr,
+                                         uint8_t key,
+                                         ContextExtensionPtr context_extension_ptr);
 
 /**
  * Compiles a contract from ErgoScript source code
@@ -1129,6 +1194,43 @@ void ergo_lib_delete_error(ErrorPtr error);
 void ergo_lib_delete_string(char *ptr);
 
 /**
+ * Drop `DerivationPath`
+ */
+void ergo_lib_derivation_path_delete(DerivationPathPtr ptr);
+
+/**
+ * Returns the length of the derivation path
+ */
+uintptr_t ergo_lib_derivation_path_depth(ConstDerivationPathPtr derivation_path_ptr);
+
+/**
+ * Create derivation path from string
+ * String should be in the form of: m/44/429/acc'/0/addr
+ */
+ErrorPtr ergo_lib_derivation_path_from_str(const char *derivation_path_str,
+                                           DerivationPathPtr *derivation_path_out);
+
+/**
+ * Create DerivationPath from account index and address indices
+ */
+ErrorPtr ergo_lib_derivation_path_new(uint32_t account,
+                                      const uint32_t *address_indices,
+                                      uintptr_t len,
+                                      DerivationPathPtr *derivation_path_out);
+
+/**
+ * Returns a new derivation path with the last element of the derivation path being increased, e.g. m/1/2 -> m/1/3
+ */
+ErrorPtr ergo_lib_derivation_path_next(ConstDerivationPathPtr derivation_path_ptr,
+                                       DerivationPathPtr *derivation_path_out);
+
+/**
+ * Get derivation path as string in the m/44/429/acc'/0/addr format
+ */
+void ergo_lib_derivation_path_to_str(ConstDerivationPathPtr derivation_path_ptr,
+                                     const char **_derivation_path_str);
+
+/**
  * Drop `ErgoBoxAssetsData`
  */
 void ergo_lib_ergo_box_assets_data_delete(ErgoBoxAssetsDataPtr ptr);
@@ -1182,6 +1284,11 @@ void ergo_lib_ergo_box_assets_data_tokens(ConstErgoBoxAssetsDataPtr ergo_box_ass
  */
 void ergo_lib_ergo_box_assets_data_value(ConstErgoBoxAssetsDataPtr ergo_box_assets_data_ptr,
                                          BoxValuePtr *value_out);
+
+/**
+ * Calculate serialized box size(in bytes)
+ */
+uintptr_t ergo_lib_ergo_box_bytes_size(ConstErgoBoxPtr ergo_box_ptr);
 
 /**
  * Get box value in nanoERGs
@@ -1457,6 +1564,7 @@ bool ergo_lib_ergo_state_context_eq(ConstErgoStateContextPtr ergo_state_context_
  */
 ErrorPtr ergo_lib_ergo_state_context_new(ConstPreHeaderPtr pre_header_ptr,
                                          ConstBlockHeadersPtr headers,
+                                         ConstParametersPtr parameters,
                                          ErgoStateContextPtr *ergo_state_context_out);
 
 /**
@@ -1537,6 +1645,42 @@ ErrorPtr ergo_lib_ergo_tree_with_constant(ConstErgoTreePtr ergo_tree_ptr,
 char *ergo_lib_error_to_string(ErrorPtr error);
 
 /**
+ * Get address for extended public key
+ */
+void ergo_lib_ext_pub_key_address(ConstExtPubKeyPtr ext_pub_key_ptr, AddressPtr *address_out);
+
+/**
+ * Derive a new extended public key from the provided index
+ * The index is in the form of soft or hardened indices
+ * For example: 4 or 4' respectively
+ */
+ErrorPtr ergo_lib_ext_pub_key_child(ConstExtPubKeyPtr derive_from_key_ptr,
+                                    uint32_t child_index,
+                                    ExtPubKeyPtr *ext_pub_key_out);
+
+/**
+ * Drop `ExtPubKey`
+ */
+void ergo_lib_ext_pub_key_delete(ExtPubKeyPtr ptr);
+
+/**
+ * Derive a new extended public key from the derivation path
+ */
+ErrorPtr ergo_lib_ext_pub_key_derive(ConstExtPubKeyPtr ext_pub_key_ptr,
+                                     ConstDerivationPathPtr derivation_path_ptr,
+                                     ExtPubKeyPtr *ext_pub_key_out);
+
+/**
+ * Create ExtPubKey from public key bytes, chain code and derivation path
+ * public_key_bytes needs to be the length of PubKeyBytes::LEN (33 bytes)
+ * chain_code_ptr needs to be the length of ChainCode::LEN (32 bytes)
+ */
+ErrorPtr ergo_lib_ext_pub_key_new(const uint8_t *public_key_bytes,
+                                  const uint8_t *chain_code_ptr,
+                                  ConstDerivationPathPtr derivation_path_ptr,
+                                  ExtPubKeyPtr *ext_pub_key_out);
+
+/**
  * Derive a new extended secret key from the provided index
  * The index is in the form of soft or hardened indices
  * For example: 4 or 4' respectively
@@ -1551,19 +1695,45 @@ ErrorPtr ergo_lib_ext_secret_key_child(ConstExtSecretKeyPtr secret_key_bytes_ptr
 void ergo_lib_ext_secret_key_delete(ExtSecretKeyPtr ptr);
 
 /**
+ * Derive a new extended secret key from the derivation path
+ */
+ErrorPtr ergo_lib_ext_secret_key_derive(ConstExtSecretKeyPtr ext_secret_key_ptr,
+                                        ConstDerivationPathPtr derivation_path_ptr,
+                                        ExtSecretKeyPtr *ext_secret_key_out);
+
+/**
  * Derive root extended secret key from seed bytes
  */
 ErrorPtr ergo_lib_ext_secret_key_derive_master(const uint8_t *seed,
                                                ExtSecretKeyPtr *ext_secret_key_out);
 
 /**
+ * Get secret key for extended secret key
+ */
+void ergo_lib_ext_secret_key_get_secret_key(ConstExtSecretKeyPtr ext_secret_key_ptr,
+                                            SecretKeyPtr *secret_key_out);
+
+/**
  * Create ExtSecretKey from secret key bytes, chain code and derivation path
- * Derivation path should be a string in the form of: m/44/429/acc'/0/addr
+ * secret_key_bytes_ptr needs to be the length of SecretKeyBytes::LEN (32 bytes)
+ * chain_code_ptr needs to be the length of ChainCode::LEN (32 bytes)
  */
 ErrorPtr ergo_lib_ext_secret_key_new(const uint8_t *secret_key_bytes_ptr,
                                      const uint8_t *chain_code_ptr,
-                                     const char *derivation_path_str,
+                                     ConstDerivationPathPtr derivation_path_ptr,
                                      ExtSecretKeyPtr *ext_secret_key_out);
+
+/**
+ * Get derivation path for extended secret key
+ */
+void ergo_lib_ext_secret_key_path(ConstExtSecretKeyPtr ext_secret_key_ptr,
+                                  DerivationPathPtr *derivation_path_out);
+
+/**
+ * The extended public key associated with this secret key
+ */
+void ergo_lib_ext_secret_key_public_key(ConstExtSecretKeyPtr ext_secret_key_ptr,
+                                        ExtPubKeyPtr *ext_pub_key_out);
 
 /**
  * Add commitment hint to the bag
@@ -1660,6 +1830,14 @@ struct ReturnString ergo_lib_mnemonic_generator_generate_from_entropy(MnemonicGe
                                                                       uintptr_t len);
 
 /**
+ * Convert a mnemonic phrase into a mnemonic seed
+ * mnemonic_pass is optional and is used to salt the seed
+ */
+void ergo_lib_mnemonic_to_seed(const char *mnemonic_phrase,
+                               const char *mnemonic_pass,
+                               uint8_t *output);
+
+/**
  * Delete `NipopowProof`
  */
 void ergo_lib_nipopow_proof_delete(NipopowProofPtr ptr);
@@ -1753,6 +1931,32 @@ void ergo_lib_node_info_get_name(NodeInfoPtr ptr, const char **name_str);
  */
 bool ergo_lib_node_info_is_at_least_version_4_0_100(NodeInfoPtr node_info_ptr);
 #endif
+
+/**
+ * Return default blockchain parameters that were set at genesis
+ */
+void ergo_lib_parameters_default(ParametersPtr *parameters_out);
+
+void ergo_lib_parameters_delete(ParametersPtr parameters);
+
+/**
+ * Parse parameters from JSON. Supports Ergo Node API/Explorer API
+ */
+ErrorPtr ergo_lib_parameters_from_json(const char *json_str, ParametersPtr *parameters_out);
+
+/**
+ * Create new parameters from provided blockchain parameters
+ */
+void ergo_lib_parameters_new(int32_t block_version,
+                             int32_t storage_fee_factor,
+                             int32_t min_value_per_byte,
+                             int32_t max_block_size,
+                             int32_t max_block_cost,
+                             int32_t token_access_cost,
+                             int32_t input_cost,
+                             int32_t data_input_cost,
+                             int32_t output_cost,
+                             ParametersPtr *parameters_out);
 
 bool ergo_lib_po_pow_header_eq(ConstPoPowHeaderPtr po_pow_header_ptr_0,
                                ConstPoPowHeaderPtr po_pow_header_ptr_1);
@@ -2298,6 +2502,11 @@ ErrorPtr ergo_lib_tx_to_json(ConstTransactionPtr tx_ptr,
  * JSON representation according to EIP-12 <https://github.com/ergoplatform/eips/pull/23>
  */
 ErrorPtr ergo_lib_tx_to_json_eip12(ConstTransactionPtr tx_ptr, const char **_json_str);
+
+ErrorPtr ergo_lib_tx_validate(ConstTransactionPtr tx_ptr,
+                              ConstErgoStateContextPtr state_context_ptr,
+                              ConstCollectionPtr_ErgoBox boxes_to_spend_ptr,
+                              ConstCollectionPtr_ErgoBox data_boxes_ptr);
 
 /**
  * Get box id
