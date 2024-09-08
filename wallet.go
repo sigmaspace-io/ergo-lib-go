@@ -28,7 +28,7 @@ func NewMnemonicGenerator(language string, strength uint32) (MnemonicGenerator, 
 
 	var p C.MnemonicGeneratorPtr
 
-	errPtr := C.ergo_lib_mnemonic_generator(languageStr, C.uint(strength), &p)
+	errPtr := C.ergo_lib_mnemonic_generator(languageStr, C.uint32_t(strength), &p)
 	err := newError(errPtr)
 
 	if err.isError() {

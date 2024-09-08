@@ -280,7 +280,7 @@ type Box interface {
 	// JsonEIP12 returns json representation of Box as string according to EIP-12 https://github.com/ergoplatform/eips/pull/23
 	JsonEIP12() (string, error)
 	// Size calculates serialized box size(in bytes)
-	Size() uint32
+	Size() uint64
 	// Equals checks if provided Box is same
 	Equals(box Box) bool
 	pointer() C.ErgoBoxPtr
@@ -304,7 +304,7 @@ func newBox(b *box) Box {
 func NewBox(boxValue BoxValue, creationHeight uint32, contract Contract, txId TxId, index uint16, tokens Tokens) (Box, error) {
 	var p C.ErgoBoxPtr
 
-	errPtr := C.ergo_lib_ergo_box_new(boxValue.pointer(), C.uint(creationHeight), contract.pointer(), txId.pointer(), C.ushort(index), tokens.pointer(), &p)
+	errPtr := C.ergo_lib_ergo_box_new(boxValue.pointer(), C.uint32_t(creationHeight), contract.pointer(), txId.pointer(), C.uint16_t(index), tokens.pointer(), &p)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -424,9 +424,9 @@ func (b *box) JsonEIP12() (string, error) {
 	return result, nil
 }
 
-func (b *box) Size() uint32 {
+func (b *box) Size() uint64 {
 	res := C.ergo_lib_ergo_box_bytes_size(b.p)
-	return uint32(res)
+	return uint64(res)
 }
 
 func (b *box) Equals(box Box) bool {

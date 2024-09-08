@@ -60,7 +60,7 @@ func newBoxCandidateBuilder(b *boxCandidateBuilder) BoxCandidateBuilder {
 func NewBoxCandidateBuilder(boxValue BoxValue, contract Contract, creationHeight uint32) BoxCandidateBuilder {
 	var p C.ErgoBoxCandidateBuilderPtr
 
-	C.ergo_lib_ergo_box_candidate_builder_new(boxValue.pointer(), contract.pointer(), C.uint(creationHeight), &p)
+	C.ergo_lib_ergo_box_candidate_builder_new(boxValue.pointer(), contract.pointer(), C.uint32_t(creationHeight), &p)
 
 	bc := &boxCandidateBuilder{p: p}
 
@@ -68,7 +68,7 @@ func NewBoxCandidateBuilder(boxValue BoxValue, contract Contract, creationHeight
 }
 
 func (b *boxCandidateBuilder) SetMinBoxValuePerByte(minBoxValuePerByte uint32) {
-	C.ergo_lib_ergo_box_candidate_builder_set_min_box_value_per_byte(b.p, C.uint(minBoxValuePerByte))
+	C.ergo_lib_ergo_box_candidate_builder_set_min_box_value_per_byte(b.p, C.uint32_t(minBoxValuePerByte))
 }
 
 func (b *boxCandidateBuilder) MinBoxValuePerByte() uint32 {

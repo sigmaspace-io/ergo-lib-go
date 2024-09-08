@@ -56,7 +56,7 @@ func NewTxBuilder(
 	C.ergo_lib_tx_builder_new(
 		boxSelection.pointer(),
 		outputCandidates.pointer(),
-		C.uint(currentHeight),
+		C.uint32_t(currentHeight),
 		feeAmount.pointer(),
 		changeAddress.pointer(),
 		&p)
