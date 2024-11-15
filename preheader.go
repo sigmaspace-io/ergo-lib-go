@@ -27,6 +27,7 @@ func NewPreHeader(header BlockHeader) PreHeader {
 	var p C.PreHeaderPtr
 
 	C.ergo_lib_preheader_from_block_header(header.pointer(), &p)
+	runtime.KeepAlive(header)
 
 	ph := &preHeader{p: p}
 
@@ -35,6 +36,8 @@ func NewPreHeader(header BlockHeader) PreHeader {
 
 func (h *preHeader) Equals(preHeader PreHeader) bool {
 	res := C.ergo_lib_pre_header_eq(h.p, preHeader.pointer())
+	runtime.KeepAlive(h)
+	runtime.KeepAlive(preHeader)
 	return bool(res)
 }
 

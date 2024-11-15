@@ -46,6 +46,7 @@ func (m *mnemonicGenerator) Generate() (string, error) {
 
 	returnStr = C.ergo_lib_mnemonic_generator_generate(m.p)
 	defer C.ergo_lib_mnemonic_generator_free_mnemonic(returnStr.value)
+	runtime.KeepAlive(m)
 	err := newError(returnStr.error)
 	if err.isError() {
 		return "", err.error()
@@ -64,6 +65,7 @@ func (m *mnemonicGenerator) GenerateFromEntropy(entropy []byte) (string, error) 
 
 	returnStr = C.ergo_lib_mnemonic_generator_generate_from_entropy(m.p, (*C.uchar)(byteData), C.uintptr_t(len(entropy)))
 	defer C.ergo_lib_mnemonic_generator_free_mnemonic(returnStr.value)
+	runtime.KeepAlive(m)
 	err := newError(returnStr.error)
 	if err.isError() {
 		return "", err.error()
@@ -137,6 +139,7 @@ func NewWalletFromSecretKeys(secrets SecretKeys) Wallet {
 
 func (w *wallet) AddSecret(secret SecretKey) error {
 	errPtr := C.ergo_lib_wallet_add_secret(w.p, secret.pointer())
+	runtime.KeepAlive(w)
 	err := newError(errPtr)
 	if err.isError() {
 		return err.error()
@@ -147,6 +150,11 @@ func (w *wallet) AddSecret(secret SecretKey) error {
 func (w *wallet) SignTransaction(stateContext StateContext, unsignedTx UnsignedTransaction, boxesToSpend Boxes, dataBoxes Boxes) (Transaction, error) {
 	var p C.TransactionPtr
 	errPtr := C.ergo_lib_wallet_sign_transaction(w.p, stateContext.pointer(), unsignedTx.pointer(), boxesToSpend.pointer(), dataBoxes.pointer(), &p)
+	runtime.KeepAlive(stateContext)
+	runtime.KeepAlive(w)
+	runtime.KeepAlive(unsignedTx)
+	runtime.KeepAlive(boxesToSpend)
+	runtime.KeepAlive(dataBoxes)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -158,6 +166,12 @@ func (w *wallet) SignTransaction(stateContext StateContext, unsignedTx UnsignedT
 func (w *wallet) SignTransactionMulti(stateContext StateContext, unsignedTx UnsignedTransaction, boxesToSpend Boxes, dataBoxes Boxes, txHints TransactionHintsBag) (Transaction, error) {
 	var p C.TransactionPtr
 	errPtr := C.ergo_lib_wallet_sign_transaction_multi(w.p, stateContext.pointer(), unsignedTx.pointer(), boxesToSpend.pointer(), dataBoxes.pointer(), txHints.pointer(), &p)
+	runtime.KeepAlive(w)
+	runtime.KeepAlive(stateContext)
+	runtime.KeepAlive(unsignedTx)
+	runtime.KeepAlive(boxesToSpend)
+	runtime.KeepAlive(dataBoxes)
+	runtime.KeepAlive(txHints)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -169,6 +183,8 @@ func (w *wallet) SignTransactionMulti(stateContext StateContext, unsignedTx Unsi
 func (w *wallet) SignReducedTransaction(reducedTx ReducedTransaction) (Transaction, error) {
 	var p C.TransactionPtr
 	errPtr := C.ergo_lib_wallet_sign_reduced_transaction(w.p, reducedTx.pointer(), &p)
+	runtime.KeepAlive(w)
+	runtime.KeepAlive(reducedTx)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -180,6 +196,9 @@ func (w *wallet) SignReducedTransaction(reducedTx ReducedTransaction) (Transacti
 func (w *wallet) SignReducedTransactionMulti(reducedTx ReducedTransaction, txHints TransactionHintsBag) (Transaction, error) {
 	var p C.TransactionPtr
 	errPtr := C.ergo_lib_wallet_sign_reduced_transaction_multi(w.p, reducedTx.pointer(), txHints.pointer(), &p)
+	runtime.KeepAlive(w)
+	runtime.KeepAlive(reducedTx)
+	runtime.KeepAlive(txHints)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -191,6 +210,11 @@ func (w *wallet) SignReducedTransactionMulti(reducedTx ReducedTransaction, txHin
 func (w *wallet) GenerateCommitments(stateContext StateContext, unsignedTx UnsignedTransaction, boxesToSpend Boxes, dataBoxes Boxes) (TransactionHintsBag, error) {
 	var p C.TransactionHintsBagPtr
 	errPtr := C.ergo_lib_wallet_generate_commitments(w.p, stateContext.pointer(), unsignedTx.pointer(), boxesToSpend.pointer(), dataBoxes.pointer(), &p)
+	runtime.KeepAlive(w)
+	runtime.KeepAlive(stateContext)
+	runtime.KeepAlive(unsignedTx)
+	runtime.KeepAlive(boxesToSpend)
+	runtime.KeepAlive(dataBoxes)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -202,6 +226,8 @@ func (w *wallet) GenerateCommitments(stateContext StateContext, unsignedTx Unsig
 func (w *wallet) GenerateCommitmentsForReducedTransaction(reducedTx ReducedTransaction) (TransactionHintsBag, error) {
 	var p C.TransactionHintsBagPtr
 	errPtr := C.ergo_lib_wallet_generate_commitments_for_reduced_transaction(w.p, reducedTx.pointer(), &p)
+	runtime.KeepAlive(w)
+	runtime.KeepAlive(reducedTx)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -216,6 +242,8 @@ func (w *wallet) SignMessageUsingP2PK(address Address, message []byte) (SignedMe
 
 	var p C.SignedMessagePtr
 	errPtr := C.ergo_lib_wallet_sign_message_using_p2pk(w.p, address.pointer(), (*C.uchar)(byteData), C.uintptr_t(len(message)), &p)
+	runtime.KeepAlive(w)
+	runtime.KeepAlive(address)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()

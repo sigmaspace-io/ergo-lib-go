@@ -74,6 +74,7 @@ func (m *merkleProof) AddNode(hash []byte, side nodeSide) error {
 	defer C.free(unsafe.Pointer(byteData))
 
 	errPtr := C.ergo_merkle_proof_add_node(m.p, (*C.uchar)(byteData), C.uintptr_t(len(hash)), C.uchar(side))
+	runtime.KeepAlive(m)
 	err := newError(errPtr)
 	if err.isError() {
 		return err.error()
@@ -85,6 +86,7 @@ func (m *merkleProof) Valid(expectedRoot []byte) bool {
 	byteData := C.CBytes(expectedRoot)
 	defer C.free(unsafe.Pointer(byteData))
 	res := C.ergo_merkle_proof_valid(m.p, (*C.uchar)(byteData), C.uintptr_t(len(expectedRoot)))
+	runtime.KeepAlive(m)
 	return bool(res)
 }
 
@@ -93,6 +95,7 @@ func (m *merkleProof) ValidBase16(expectedRoot string) bool {
 	defer C.free(unsafe.Pointer(rootStr))
 	var res C.bool
 	errPtr := C.ergo_merkle_proof_valid_base16(m.p, rootStr, &res)
+	runtime.KeepAlive(m)
 	err := newError(errPtr)
 	if err.isError() {
 		return false

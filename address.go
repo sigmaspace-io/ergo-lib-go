@@ -74,6 +74,7 @@ func NewAddress(s string) (Address, error) {
 func NewAddressFromTree(tree Tree) (Address, error) {
 	var p C.AddressPtr
 	errPtr := C.ergo_lib_address_from_ergo_tree(tree.pointer(), &p)
+	runtime.KeepAlive(tree)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -103,18 +104,21 @@ func (a *address) Base58(prefix networkPrefix) string {
 
 	C.ergo_lib_address_to_base58(a.p, cPrefix, &outAddrStr)
 	defer C.ergo_lib_delete_string(outAddrStr)
+	runtime.KeepAlive(a)
 
 	return C.GoString(outAddrStr)
 }
 
 func (a *address) TypePrefix() addressTypePrefix {
 	prefix := C.ergo_lib_address_type_prefix(a.p)
+	runtime.KeepAlive(a)
 	return addressTypePrefix(prefix)
 }
 
 func (a *address) Tree() Tree {
 	var p C.ErgoTreePtr
 	C.ergo_lib_address_to_ergo_tree(a.p, &p)
+	runtime.KeepAlive(a)
 	t := &tree{p: p}
 	return newTree(t)
 }

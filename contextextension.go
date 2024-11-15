@@ -49,6 +49,7 @@ func (c *contextExtension) Keys() iter.Seq[uint8] {
 	defer C.free(unsafe.Pointer(output))
 
 	C.ergo_lib_context_extension_keys(c.p, (*C.uint8_t)(output))
+	runtime.KeepAlive(c)
 
 	result := C.GoBytes(unsafe.Pointer(output), C.int(bytesLength))
 
@@ -65,6 +66,7 @@ func (c *contextExtension) Get(key uint8) (Constant, error) {
 	var p C.ConstantPtr
 
 	res := C.ergo_lib_context_extension_get(c.p, C.uint8_t(key), &p)
+	runtime.KeepAlive(c)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -80,6 +82,8 @@ func (c *contextExtension) Get(key uint8) (Constant, error) {
 
 func (c *contextExtension) Set(key uint8, constant Constant) {
 	C.ergo_lib_context_extension_set_pair(constant.pointer(), C.uint8_t(key), c.p)
+	runtime.KeepAlive(c)
+	runtime.KeepAlive(constant)
 }
 
 func (c *contextExtension) All() iter.Seq2[uint8, Constant] {
@@ -93,6 +97,7 @@ func (c *contextExtension) All() iter.Seq2[uint8, Constant] {
 				return
 			}
 		}
+		runtime.KeepAlive(c)
 	}
 }
 
@@ -107,6 +112,7 @@ func (c *contextExtension) Values() iter.Seq[Constant] {
 				return
 			}
 		}
+		runtime.KeepAlive(c)
 	}
 }
 

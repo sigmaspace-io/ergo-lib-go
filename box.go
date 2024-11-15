@@ -69,12 +69,15 @@ func (b *boxId) Base16() string {
 
 	C.ergo_lib_box_id_to_str(b.p, &boxIdStr)
 	defer C.ergo_lib_delete_string(boxIdStr)
+	runtime.KeepAlive(b)
 
 	return C.GoString(boxIdStr)
 }
 
 func (b *boxId) Equals(boxId BoxId) bool {
 	res := C.ergo_lib_box_id_eq(b.p, boxId.pointer())
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(boxId)
 	return bool(res)
 }
 
@@ -121,11 +124,14 @@ func NewBoxValue(value int64) (BoxValue, error) {
 
 func (b *boxValue) Int64() int64 {
 	value := C.ergo_lib_box_value_as_i64(b.p)
+	runtime.KeepAlive(b)
 	return int64(value)
 }
 
 func (b *boxValue) Equals(boxValue BoxValue) bool {
 	res := C.ergo_lib_box_value_eq(b.p, boxValue.pointer())
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(boxValue)
 	return bool(res)
 }
 
@@ -158,6 +164,8 @@ func UnitsPerErgo() int64 {
 func SumOfBoxValues(boxValue0 BoxValue, boxValue1 BoxValue) (BoxValue, error) {
 	var p C.BoxValuePtr
 	errPtr := C.ergo_lib_box_value_sum_of(boxValue0.pointer(), boxValue1.pointer(), &p)
+	runtime.KeepAlive(boxValue0)
+	runtime.KeepAlive(boxValue1)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -200,6 +208,7 @@ func (b *boxCandidate) RegisterValue(registerId nonMandatoryRegisterId) (Constan
 	rId := C.uchar(registerId)
 
 	res := C.ergo_lib_ergo_box_candidate_register_value(b.p, rId, &p)
+	runtime.KeepAlive(b)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -214,6 +223,7 @@ func (b *boxCandidate) RegisterValue(registerId nonMandatoryRegisterId) (Constan
 
 func (b *boxCandidate) CreationHeight() uint32 {
 	height := C.ergo_lib_ergo_box_candidate_creation_height(b.p)
+	runtime.KeepAlive(b)
 	return uint32(height)
 }
 
@@ -221,6 +231,7 @@ func (b *boxCandidate) Tokens() Tokens {
 	var p C.TokensPtr
 
 	C.ergo_lib_ergo_box_candidate_tokens(b.p, &p)
+	runtime.KeepAlive(b)
 
 	t := &tokens{p: p}
 
@@ -231,6 +242,7 @@ func (b *boxCandidate) Tree() Tree {
 	var p C.ErgoTreePtr
 
 	C.ergo_lib_ergo_box_candidate_ergo_tree(b.p, &p)
+	runtime.KeepAlive(b)
 
 	t := &tree{p: p}
 
@@ -241,6 +253,7 @@ func (b *boxCandidate) BoxValue() BoxValue {
 	var p C.BoxValuePtr
 
 	C.ergo_lib_ergo_box_candidate_box_value(b.p, &p)
+	runtime.KeepAlive(b)
 
 	bv := &boxValue{p: p}
 
@@ -249,6 +262,8 @@ func (b *boxCandidate) BoxValue() BoxValue {
 
 func (b *boxCandidate) Equals(candidate BoxCandidate) bool {
 	res := C.ergo_lib_ergo_box_candidate_eq(b.p, candidate.pointer())
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(candidate)
 	return bool(res)
 }
 
@@ -305,6 +320,10 @@ func NewBox(boxValue BoxValue, creationHeight uint32, contract Contract, txId Tx
 	var p C.ErgoBoxPtr
 
 	errPtr := C.ergo_lib_ergo_box_new(boxValue.pointer(), C.uint32_t(creationHeight), contract.pointer(), txId.pointer(), C.uint16_t(index), tokens.pointer(), &p)
+	runtime.KeepAlive(boxValue)
+	runtime.KeepAlive(contract)
+	runtime.KeepAlive(txId)
+	runtime.KeepAlive(tokens)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -337,6 +356,7 @@ func (b *box) BoxId() BoxId {
 	var p C.BoxIdPtr
 
 	C.ergo_lib_ergo_box_id(b.p, &p)
+	runtime.KeepAlive(b)
 
 	bi := &boxId{p: p}
 
@@ -348,6 +368,7 @@ func (b *box) RegisterValue(registerId nonMandatoryRegisterId) (Constant, error)
 	rId := C.uchar(registerId)
 
 	res := C.ergo_lib_ergo_box_register_value(b.p, rId, &p)
+	runtime.KeepAlive(b)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -362,12 +383,14 @@ func (b *box) RegisterValue(registerId nonMandatoryRegisterId) (Constant, error)
 
 func (b *box) CreationHeight() uint32 {
 	height := C.ergo_lib_ergo_box_creation_height(b.p)
+	runtime.KeepAlive(b)
 	return uint32(height)
 }
 
 func (b *box) Tokens() Tokens {
 	var p C.TokensPtr
 	C.ergo_lib_ergo_box_tokens(b.p, &p)
+	runtime.KeepAlive(b)
 
 	t := &tokens{p: p}
 
@@ -377,6 +400,7 @@ func (b *box) Tokens() Tokens {
 func (b *box) Tree() Tree {
 	var p C.ErgoTreePtr
 	C.ergo_lib_ergo_box_ergo_tree(b.p, &p)
+	runtime.KeepAlive(b)
 
 	t := &tree{p: p}
 
@@ -386,6 +410,7 @@ func (b *box) Tree() Tree {
 func (b *box) BoxValue() BoxValue {
 	var p C.BoxValuePtr
 	C.ergo_lib_ergo_box_value(b.p, &p)
+	runtime.KeepAlive(b)
 
 	bv := &boxValue{p: p}
 
@@ -397,6 +422,7 @@ func (b *box) Json() (string, error) {
 
 	errPtr := C.ergo_lib_ergo_box_to_json(b.p, &outStr)
 	defer C.ergo_lib_delete_string(outStr)
+	runtime.KeepAlive(b)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -413,6 +439,7 @@ func (b *box) JsonEIP12() (string, error) {
 
 	errPtr := C.ergo_lib_ergo_box_to_json_eip12(b.p, &outStr)
 	defer C.ergo_lib_delete_string(outStr)
+	runtime.KeepAlive(b)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -426,11 +453,13 @@ func (b *box) JsonEIP12() (string, error) {
 
 func (b *box) Size() uint64 {
 	res := C.ergo_lib_ergo_box_bytes_size(b.p)
+	runtime.KeepAlive(b)
 	return uint64(res)
 }
 
 func (b *box) Equals(box Box) bool {
 	res := C.ergo_lib_ergo_box_eq(b.p, box.pointer())
+	runtime.KeepAlive(b)
 	return bool(res)
 }
 
@@ -466,6 +495,8 @@ func newBoxAssetsData(b *boxAssetsData) BoxAssetsData {
 func NewBoxAssetsData(boxValue BoxValue, tokens Tokens) BoxAssetsData {
 	var p C.ErgoBoxAssetsDataPtr
 	C.ergo_lib_ergo_box_assets_data_new(boxValue.pointer(), tokens.pointer(), &p)
+	runtime.KeepAlive(boxValue)
+	runtime.KeepAlive(tokens)
 
 	b := &boxAssetsData{p: p}
 
@@ -475,6 +506,7 @@ func NewBoxAssetsData(boxValue BoxValue, tokens Tokens) BoxAssetsData {
 func (b *boxAssetsData) BoxValue() BoxValue {
 	var p C.BoxValuePtr
 	C.ergo_lib_ergo_box_assets_data_value(b.p, &p)
+	runtime.KeepAlive(b)
 
 	bv := &boxValue{p: p}
 
@@ -484,6 +516,7 @@ func (b *boxAssetsData) BoxValue() BoxValue {
 func (b *boxAssetsData) Tokens() Tokens {
 	var p C.TokensPtr
 	C.ergo_lib_ergo_box_assets_data_tokens(b.p, &p)
+	runtime.KeepAlive(b)
 
 	t := &tokens{p: p}
 
@@ -492,6 +525,8 @@ func (b *boxAssetsData) Tokens() Tokens {
 
 func (b *boxAssetsData) Equals(boxAssetsData BoxAssetsData) bool {
 	res := C.ergo_lib_ergo_box_assets_data_eq(b.p, boxAssetsData.pointer())
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(boxAssetsData)
 	return bool(res)
 }
 
@@ -537,6 +572,7 @@ func NewBoxAssetsDataList() BoxAssetsDataList {
 
 func (b *boxAssetsDataList) Len() int {
 	res := C.ergo_lib_ergo_box_assets_data_list_len(b.p)
+	runtime.KeepAlive(b)
 	return int(res)
 }
 
@@ -544,6 +580,7 @@ func (b *boxAssetsDataList) Get(index int) (BoxAssetsData, error) {
 	var p C.ErgoBoxAssetsDataPtr
 
 	res := C.ergo_lib_ergo_box_assets_data_list_get(b.p, C.uintptr_t(index), &p)
+	runtime.KeepAlive(b)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -559,6 +596,8 @@ func (b *boxAssetsDataList) Get(index int) (BoxAssetsData, error) {
 
 func (b *boxAssetsDataList) Add(boxAssetsData BoxAssetsData) {
 	C.ergo_lib_ergo_box_assets_data_list_add(boxAssetsData.pointer(), b.p)
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(boxAssetsData)
 }
 
 func (b *boxAssetsDataList) All() iter.Seq2[int, BoxAssetsData] {
@@ -572,6 +611,7 @@ func (b *boxAssetsDataList) All() iter.Seq2[int, BoxAssetsData] {
 				return
 			}
 		}
+		runtime.KeepAlive(b)
 	}
 }
 
@@ -617,6 +657,7 @@ func NewBoxCandidates() BoxCandidates {
 
 func (b *boxCandidates) Len() int {
 	res := C.ergo_lib_ergo_box_candidates_len(b.p)
+	runtime.KeepAlive(b)
 	return int(res)
 }
 
@@ -624,6 +665,7 @@ func (b *boxCandidates) Get(index int) (BoxCandidate, error) {
 	var p C.ErgoBoxCandidatePtr
 
 	res := C.ergo_lib_ergo_box_candidates_get(b.p, C.uintptr_t(index), &p)
+	runtime.KeepAlive(b)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -639,6 +681,8 @@ func (b *boxCandidates) Get(index int) (BoxCandidate, error) {
 
 func (b *boxCandidates) Add(boxCandidate BoxCandidate) {
 	C.ergo_lib_ergo_box_candidates_add(boxCandidate.pointer(), b.p)
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(boxCandidate)
 }
 
 func (b *boxCandidates) All() iter.Seq2[int, BoxCandidate] {
@@ -652,6 +696,7 @@ func (b *boxCandidates) All() iter.Seq2[int, BoxCandidate] {
 				return
 			}
 		}
+		runtime.KeepAlive(b)
 	}
 }
 
@@ -697,6 +742,7 @@ func NewBoxes() Boxes {
 
 func (b *boxes) Len() int {
 	res := C.ergo_lib_ergo_boxes_len(b.p)
+	runtime.KeepAlive(b)
 	return int(res)
 }
 
@@ -704,6 +750,7 @@ func (b *boxes) Get(index int) (Box, error) {
 	var p C.ErgoBoxPtr
 
 	res := C.ergo_lib_ergo_boxes_get(b.p, C.uintptr_t(index), &p)
+	runtime.KeepAlive(b)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -719,6 +766,8 @@ func (b *boxes) Get(index int) (Box, error) {
 
 func (b *boxes) Add(box Box) {
 	C.ergo_lib_ergo_boxes_add(box.pointer(), b.p)
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(box)
 }
 
 func (b *boxes) All() iter.Seq2[int, Box] {
@@ -732,6 +781,7 @@ func (b *boxes) All() iter.Seq2[int, Box] {
 				return
 			}
 		}
+		runtime.KeepAlive(b)
 	}
 }
 

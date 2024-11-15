@@ -60,25 +60,37 @@ func NewTxBuilder(
 		feeAmount.pointer(),
 		changeAddress.pointer(),
 		&p)
+	runtime.KeepAlive(boxSelection)
+	runtime.KeepAlive(outputCandidates)
+	runtime.KeepAlive(feeAmount)
+	runtime.KeepAlive(changeAddress)
 	tb := &txBuilder{p: p}
 	return newTxBuilder(tb)
 }
 
 func (t *txBuilder) SetDataInputs(dataInputs DataInputs) {
 	C.ergo_lib_tx_builder_set_data_inputs(t.p, dataInputs.pointer())
+	runtime.KeepAlive(t)
+	runtime.KeepAlive(dataInputs)
 }
 
 func (t *txBuilder) SetContextExtension(boxId BoxId, contextExtension ContextExtension) {
 	C.ergo_lib_tx_builder_set_context_extension(t.p, boxId.pointer(), contextExtension.pointer())
+	runtime.KeepAlive(t)
+	runtime.KeepAlive(boxId)
+	runtime.KeepAlive(contextExtension)
 }
 
 func (t *txBuilder) SetTokenBurnPermit(tokens Tokens) {
 	C.ergo_lib_tx_builder_set_token_burn_permit(t.p, tokens.pointer())
+	runtime.KeepAlive(t)
+	runtime.KeepAlive(tokens)
 }
 
 func (t *txBuilder) DataInputs() DataInputs {
 	var p C.DataInputsPtr
 	C.ergo_lib_tx_builder_data_inputs(t.p, &p)
+	runtime.KeepAlive(t)
 	di := &dataInputs{p: p}
 	return newDataInputs(di)
 }
@@ -86,6 +98,7 @@ func (t *txBuilder) DataInputs() DataInputs {
 func (t *txBuilder) BoxSelection() BoxSelection {
 	var p C.BoxSelectionPtr
 	C.ergo_lib_tx_builder_box_selection(t.p, &p)
+	runtime.KeepAlive(t)
 	bs := &boxSelection{p: p}
 	return newBoxSelection(bs)
 }
@@ -93,18 +106,21 @@ func (t *txBuilder) BoxSelection() BoxSelection {
 func (t *txBuilder) OutputCandidates() BoxCandidates {
 	var p C.ErgoBoxCandidatesPtr
 	C.ergo_lib_tx_builder_output_candidates(t.p, &p)
+	runtime.KeepAlive(t)
 	bc := &boxCandidates{p: p}
 	return newBoxCandidates(bc)
 }
 
 func (t *txBuilder) CurrentHeight() uint32 {
 	res := C.ergo_lib_tx_builder_current_height(t.p)
+	runtime.KeepAlive(t)
 	return uint32(res)
 }
 
 func (t *txBuilder) FeeAmount() BoxValue {
 	var p C.BoxValuePtr
 	C.ergo_lib_tx_builder_fee_amount(t.p, &p)
+	runtime.KeepAlive(t)
 	bv := &boxValue{p: p}
 	return newBoxValue(bv)
 }
@@ -112,6 +128,7 @@ func (t *txBuilder) FeeAmount() BoxValue {
 func (t *txBuilder) ChangeAddress() Address {
 	var p C.AddressPtr
 	C.ergo_lib_tx_builder_change_address(t.p, &p)
+	runtime.KeepAlive(t)
 	a := &address{p: p}
 	return newAddress(a)
 }
@@ -120,6 +137,7 @@ func (t *txBuilder) Build() (UnsignedTransaction, error) {
 	var p C.UnsignedTransactionPtr
 
 	errPtr := C.ergo_lib_tx_builder_build(t.p, &p)
+	runtime.KeepAlive(t)
 	err := newError(errPtr)
 
 	if err.isError() {

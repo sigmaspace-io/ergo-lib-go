@@ -49,6 +49,8 @@ func NewNipopowProof(json string) (NipopowProof, error) {
 
 func (p *nipopowProof) IsBetterThan(otherProof NipopowProof) (bool, error) {
 	res := C.ergo_lib_nipopow_proof_is_better_than(p.p, otherProof.pointer())
+	runtime.KeepAlive(p)
+	runtime.KeepAlive(otherProof)
 	err := newError(res.error)
 	if err.isError() {
 		return false, err.error()
@@ -59,6 +61,7 @@ func (p *nipopowProof) IsBetterThan(otherProof NipopowProof) (bool, error) {
 func (p *nipopowProof) SuffixHead() PoPowHeader {
 	var ptr C.PoPowHeaderPtr
 	C.ergo_lib_nipopow_proof_suffix_head(p.p, &ptr)
+	runtime.KeepAlive(p)
 	pp := &poPowHeader{p: ptr}
 	return newPoPowHeader(pp)
 }
@@ -68,6 +71,7 @@ func (p *nipopowProof) Json() (string, error) {
 
 	errPtr := C.ergo_lib_nipopow_proof_to_json(p.p, &outStr)
 	defer C.ergo_lib_delete_string(outStr)
+	runtime.KeepAlive(p)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -111,6 +115,7 @@ func newNipopowVerifier(n *nipopowVerifier) NipopowVerifier {
 func NewNipopowVerifier(genesisBlockId BlockId) NipopowVerifier {
 	var p C.NipopowVerifierPtr
 	C.ergo_lib_nipopow_verifier_new(genesisBlockId.pointer(), &p)
+	runtime.KeepAlive(genesisBlockId)
 	np := &nipopowVerifier{p: p}
 	return newNipopowVerifier(np)
 }
@@ -118,6 +123,7 @@ func NewNipopowVerifier(genesisBlockId BlockId) NipopowVerifier {
 func (n *nipopowVerifier) BestProof() NipopowProof {
 	var p C.NipopowProofPtr
 	C.ergo_lib_nipopow_verifier_best_proof(n.p, &p)
+	runtime.KeepAlive(n)
 	np := &nipopowProof{p: p}
 	return newNipopowProof(np)
 }
@@ -125,12 +131,15 @@ func (n *nipopowVerifier) BestProof() NipopowProof {
 func (n *nipopowVerifier) BestChain() BlockHeaders {
 	var p C.BlockHeadersPtr
 	C.ergo_lib_nipopow_verifier_best_chain(n.p, &p)
+	runtime.KeepAlive(n)
 	bh := &blockHeaders{p: p}
 	return newBlockHeaders(bh)
 }
 
 func (n *nipopowVerifier) Process(newProof NipopowProof) error {
 	errPtr := C.ergo_lib_nipopow_verifier_process(n.p, newProof.pointer())
+	runtime.KeepAlive(n)
+	runtime.KeepAlive(newProof)
 	err := newError(errPtr)
 	if err.isError() {
 		return err.error()
@@ -188,6 +197,7 @@ func NewPoPowHeader(json string) (PoPowHeader, error) {
 func (p *poPowHeader) Header() (BlockHeader, error) {
 	var ptr C.BlockHeaderPtr
 	errPtr := C.ergo_lib_popow_header_get_header(p.p, &ptr)
+	runtime.KeepAlive(p)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -199,6 +209,7 @@ func (p *poPowHeader) Header() (BlockHeader, error) {
 func (p *poPowHeader) Interlinks() (BlockIds, error) {
 	var ptr C.BlockIdsPtr
 	errPtr := C.ergo_lib_popow_header_get_interlinks(p.p, &ptr)
+	runtime.KeepAlive(p)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -210,6 +221,7 @@ func (p *poPowHeader) Interlinks() (BlockIds, error) {
 func (p *poPowHeader) InterlinksProof() (BatchMerkleProof, error) {
 	var ptr C.BatchMerkleProofPtr
 	errPtr := C.ergo_lib_popow_header_get_interlinks_proof(p.p, &ptr)
+	runtime.KeepAlive(p)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -220,6 +232,7 @@ func (p *poPowHeader) InterlinksProof() (BatchMerkleProof, error) {
 
 func (p *poPowHeader) CheckInterlinksProof() bool {
 	res := C.ergo_lib_popow_header_check_interlinks_proof(p.p)
+	runtime.KeepAlive(p)
 	return bool(res)
 }
 
@@ -228,6 +241,7 @@ func (p *poPowHeader) Json() (string, error) {
 
 	errPtr := C.ergo_lib_popow_header_to_json(p.p, &outStr)
 	defer C.ergo_lib_delete_string(outStr)
+	runtime.KeepAlive(p)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -241,6 +255,8 @@ func (p *poPowHeader) Json() (string, error) {
 
 func (p *poPowHeader) Equals(poPowHeader PoPowHeader) bool {
 	res := C.ergo_lib_po_pow_header_eq(p.p, poPowHeader.pointer())
+	runtime.KeepAlive(p)
+	runtime.KeepAlive(poPowHeader)
 	return bool(res)
 }
 

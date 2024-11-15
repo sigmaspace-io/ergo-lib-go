@@ -116,6 +116,7 @@ func NewConstantFromECPointBytes(b []byte) (Constant, error) {
 func NewConstantFromBox(box Box) Constant {
 	var p C.ConstantPtr
 	C.ergo_lib_constant_from_ergo_box(box.pointer(), &p)
+	runtime.KeepAlive(box)
 	c := &constant{p}
 	return newConstant(c)
 }
@@ -125,6 +126,7 @@ func (c *constant) Base16() (string, error) {
 
 	errPtr := C.ergo_lib_constant_to_base16(c.p, &constantStr)
 	defer C.ergo_lib_delete_string(constantStr)
+	runtime.KeepAlive(c)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -139,6 +141,7 @@ func (c *constant) Type() (string, error) {
 
 	errPtr := C.ergo_lib_constant_type_to_dbg_str(c.p, &constantTypeStr)
 	defer C.ergo_lib_delete_string(constantTypeStr)
+	runtime.KeepAlive(c)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -153,6 +156,7 @@ func (c *constant) Value() (string, error) {
 
 	errPtr := C.ergo_lib_constant_value_to_dbg_str(c.p, &constantValueStr)
 	defer C.ergo_lib_delete_string(constantValueStr)
+	runtime.KeepAlive(c)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -164,6 +168,7 @@ func (c *constant) Value() (string, error) {
 
 func (c *constant) Int16() (int16, error) {
 	res := C.ergo_lib_constant_to_i16(c.p)
+	runtime.KeepAlive(c)
 	err := newError(res.error)
 	if err.isError() {
 		return 0, err.error()
@@ -173,6 +178,7 @@ func (c *constant) Int16() (int16, error) {
 
 func (c *constant) Int32() (int32, error) {
 	res := C.ergo_lib_constant_to_i32(c.p)
+	runtime.KeepAlive(c)
 	err := newError(res.error)
 	if err.isError() {
 		return 0, err.error()
@@ -182,6 +188,7 @@ func (c *constant) Int32() (int32, error) {
 
 func (c *constant) Int64() (int64, error) {
 	res := C.ergo_lib_constant_to_i64(c.p)
+	runtime.KeepAlive(c)
 	err := newError(res.error)
 	if err.isError() {
 		return 0, err.error()
@@ -191,12 +198,15 @@ func (c *constant) Int64() (int64, error) {
 
 func (c *constant) Equals(constant Constant) bool {
 	res := C.ergo_lib_constant_eq(c.p, constant.pointer())
+	runtime.KeepAlive(c)
+	runtime.KeepAlive(constant)
 	return bool(res)
 }
 
 func (c *constant) bytesLength() (int, error) {
 	var returnNum C.ReturnNum_usize
 	returnNum = C.ergo_lib_constant_bytes_len(c.p)
+	runtime.KeepAlive(c)
 	err := newError(returnNum.error)
 
 	if err.isError() {
@@ -217,6 +227,7 @@ func (c *constant) Bytes() ([]byte, error) {
 	defer C.free(unsafe.Pointer(output))
 
 	errPtr := C.ergo_lib_constant_to_bytes(c.p, (*C.uint8_t)(output))
+	runtime.KeepAlive(c)
 	err := newError(errPtr)
 
 	if err.isError() {

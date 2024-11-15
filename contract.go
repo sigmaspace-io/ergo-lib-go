@@ -31,6 +31,7 @@ func newContract(c *contract) Contract {
 func NewContractFromTree(ergoTree Tree) Contract {
 	var p C.ContractPtr
 	C.ergo_lib_contract_new(ergoTree.pointer(), &p)
+	runtime.KeepAlive(ergoTree)
 
 	c := &contract{p: p}
 
@@ -58,6 +59,7 @@ func NewContractCompileFromString(compileFromString string) (Contract, error) {
 func NewContractPayToAddress(payToAddress Address) (Contract, error) {
 	var p C.ContractPtr
 	errPtr := C.ergo_lib_contract_pay_to_address(payToAddress.pointer(), &p)
+	runtime.KeepAlive(payToAddress)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -71,6 +73,7 @@ func NewContractPayToAddress(payToAddress Address) (Contract, error) {
 func (c *contract) Tree() Tree {
 	var ergoTreePtr C.ErgoTreePtr
 	C.ergo_lib_contract_ergo_tree(c.p, &ergoTreePtr)
+	runtime.KeepAlive(c)
 
 	newErgoTree := &tree{p: ergoTreePtr}
 
@@ -79,6 +82,8 @@ func (c *contract) Tree() Tree {
 
 func (c *contract) Equals(contract Contract) bool {
 	res := C.ergo_lib_contract_eq(c.p, contract.pointer())
+	runtime.KeepAlive(c)
+	runtime.KeepAlive(contract)
 	return bool(res)
 }
 

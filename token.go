@@ -51,12 +51,15 @@ func NewTokenId(s string) (TokenId, error) {
 func NewTokenIdFromBoxId(boxId BoxId) TokenId {
 	var p C.TokenIdPtr
 	C.ergo_lib_token_id_from_box_id(boxId.pointer(), &p)
+	runtime.KeepAlive(boxId)
 	t := &tokenId{p: p}
 	return newTokenId(t)
 }
 
 func (t *tokenId) Equals(tokenId TokenId) bool {
 	res := C.ergo_lib_token_id_eq(t.p, tokenId.pointer())
+	runtime.KeepAlive(t)
+	runtime.KeepAlive(tokenId)
 	return bool(res)
 }
 
@@ -69,6 +72,7 @@ func (t *tokenId) Base16() string {
 
 	C.ergo_lib_token_id_to_str(t.p, &outStr)
 	defer C.ergo_lib_delete_string(outStr)
+	runtime.KeepAlive(t)
 
 	result := C.GoString(outStr)
 
@@ -120,6 +124,8 @@ func (t *tokenAmount) Int64() int64 {
 
 func (t *tokenAmount) Equals(tokenAmount TokenAmount) bool {
 	res := C.ergo_lib_token_amount_eq(t.p, tokenAmount.pointer())
+	runtime.KeepAlive(t)
+	runtime.KeepAlive(tokenAmount)
 	return bool(res)
 }
 
@@ -158,6 +164,8 @@ func NewToken(tokenId TokenId, tokenAmount TokenAmount) Token {
 	var p C.TokenPtr
 
 	C.ergo_lib_token_new(tokenId.pointer(), tokenAmount.pointer(), &p)
+	runtime.KeepAlive(tokenId)
+	runtime.KeepAlive(tokenAmount)
 
 	t := &token{p: p}
 
@@ -187,6 +195,7 @@ func (t *token) JsonEIP12() (string, error) {
 
 	errPtr := C.ergo_lib_token_to_json_eip12(t.p, &outStr)
 	defer C.ergo_lib_delete_string(outStr)
+	runtime.KeepAlive(t)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -200,6 +209,8 @@ func (t *token) JsonEIP12() (string, error) {
 
 func (t *token) Equals(token Token) bool {
 	res := C.ergo_lib_token_eq(t.p, token.pointer())
+	runtime.KeepAlive(t)
+	runtime.KeepAlive(token)
 	return bool(res)
 }
 
@@ -245,6 +256,7 @@ func NewTokens() Tokens {
 
 func (t *tokens) Len() int {
 	res := C.ergo_lib_tokens_len(t.p)
+	runtime.KeepAlive(t)
 	return int(res)
 }
 
@@ -252,6 +264,7 @@ func (t *tokens) Get(index int) (Token, error) {
 	var p C.TokenPtr
 
 	res := C.ergo_lib_tokens_get(t.p, C.uintptr_t(index), &p)
+	runtime.KeepAlive(t)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -264,6 +277,8 @@ func (t *tokens) Get(index int) (Token, error) {
 
 func (t *tokens) Add(token Token) {
 	C.ergo_lib_tokens_add(token.pointer(), t.p)
+	runtime.KeepAlive(t)
+	runtime.KeepAlive(token)
 }
 
 func (t *tokens) All() iter.Seq2[int, Token] {
@@ -277,6 +292,7 @@ func (t *tokens) All() iter.Seq2[int, Token] {
 				return
 			}
 		}
+		runtime.KeepAlive(t)
 	}
 }
 

@@ -62,18 +62,22 @@ func (d *derivationPath) String() string {
 
 	C.ergo_lib_derivation_path_to_str(d.p, &derivationPathStr)
 	defer C.ergo_lib_delete_string(derivationPathStr)
+	runtime.KeepAlive(d)
 
 	return C.GoString(derivationPathStr)
 }
 
 func (d *derivationPath) Depth() uint32 {
-	return uint32(C.ergo_lib_derivation_path_depth(d.p))
+	res := C.ergo_lib_derivation_path_depth(d.p)
+	runtime.KeepAlive(d)
+	return uint32(res)
 }
 
 func (d *derivationPath) Next() (DerivationPath, error) {
 	var p C.DerivationPathPtr
 
 	errPtr := C.ergo_lib_derivation_path_next(d.p, &p)
+	runtime.KeepAlive(d)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()

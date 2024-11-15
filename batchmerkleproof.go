@@ -40,6 +40,7 @@ func (b *batchMerkleProof) Valid(expectedRoot []byte) bool {
 	byteData := C.CBytes(expectedRoot)
 	defer C.free(unsafe.Pointer(byteData))
 	res := C.ergo_lib_batch_merkle_proof_valid(b.p, (*C.uchar)(byteData), C.uintptr_t(len(expectedRoot)))
+	runtime.KeepAlive(b)
 	return bool(res)
 }
 

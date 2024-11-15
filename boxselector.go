@@ -30,6 +30,8 @@ func newBoxSelection(b *boxSelection) BoxSelection {
 func NewBoxSelection(ergoBoxes Boxes, changeErgoBoxes BoxAssetsDataList) BoxSelection {
 	var p C.BoxSelectionPtr
 	C.ergo_lib_box_selection_new(ergoBoxes.pointer(), changeErgoBoxes.pointer(), &p)
+	runtime.KeepAlive(ergoBoxes)
+	runtime.KeepAlive(changeErgoBoxes)
 	bs := &boxSelection{p: p}
 	return newBoxSelection(bs)
 }
@@ -37,6 +39,7 @@ func NewBoxSelection(ergoBoxes Boxes, changeErgoBoxes BoxAssetsDataList) BoxSele
 func (b *boxSelection) Boxes() Boxes {
 	var p C.ErgoBoxesPtr
 	C.ergo_lib_box_selection_boxes(b.p, &p)
+	runtime.KeepAlive(b)
 	bo := &boxes{p: p}
 	return newBoxes(bo)
 }
@@ -44,12 +47,15 @@ func (b *boxSelection) Boxes() Boxes {
 func (b *boxSelection) ChangeBoxes() BoxAssetsDataList {
 	var p C.ErgoBoxAssetsDataListPtr
 	C.ergo_lib_box_selection_change(b.p, &p)
+	runtime.KeepAlive(b)
 	ba := &boxAssetsDataList{p: p}
 	return newBoxAssetsDataList(ba)
 }
 
 func (b *boxSelection) Equals(boxSelection BoxSelection) bool {
 	res := C.ergo_lib_box_selection_eq(b.p, boxSelection.pointer())
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(boxSelection)
 	return bool(res)
 }
 
@@ -92,6 +98,10 @@ func NewSimpleBoxSelector() SimpleBoxSelector {
 func (b *simpleBoxSelector) Select(inputs Boxes, targetBalance BoxValue, targetTokens Tokens) (BoxSelection, error) {
 	var p C.BoxSelectionPtr
 	errPtr := C.ergo_lib_simple_box_selector_select(b.p, inputs.pointer(), targetBalance.pointer(), targetTokens.pointer(), &p)
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(inputs)
+	runtime.KeepAlive(targetBalance)
+	runtime.KeepAlive(targetTokens)
 	err := newError(errPtr)
 
 	if err.isError() {

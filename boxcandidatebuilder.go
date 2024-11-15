@@ -61,6 +61,8 @@ func NewBoxCandidateBuilder(boxValue BoxValue, contract Contract, creationHeight
 	var p C.ErgoBoxCandidateBuilderPtr
 
 	C.ergo_lib_ergo_box_candidate_builder_new(boxValue.pointer(), contract.pointer(), C.uint32_t(creationHeight), &p)
+	runtime.KeepAlive(boxValue)
+	runtime.KeepAlive(contract)
 
 	bc := &boxCandidateBuilder{p: p}
 
@@ -69,26 +71,32 @@ func NewBoxCandidateBuilder(boxValue BoxValue, contract Contract, creationHeight
 
 func (b *boxCandidateBuilder) SetMinBoxValuePerByte(minBoxValuePerByte uint32) {
 	C.ergo_lib_ergo_box_candidate_builder_set_min_box_value_per_byte(b.p, C.uint32_t(minBoxValuePerByte))
+	runtime.KeepAlive(b)
 }
 
 func (b *boxCandidateBuilder) MinBoxValuePerByte() uint32 {
 	res := C.ergo_lib_ergo_box_candidate_builder_min_box_value_per_byte(b.p)
+	runtime.KeepAlive(b)
 	return uint32(res)
 }
 
 func (b *boxCandidateBuilder) SetValue(boxValue BoxValue) {
 	C.ergo_lib_ergo_box_candidate_builder_set_value(b.p, boxValue.pointer())
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(boxValue)
 }
 
 func (b *boxCandidateBuilder) Value() BoxValue {
 	var p C.BoxValuePtr
 	C.ergo_lib_ergo_box_candidate_builder_value(b.p, &p)
+	runtime.KeepAlive(b)
 	bv := &boxValue{p: p}
 	return newBoxValue(bv)
 }
 
 func (b *boxCandidateBuilder) CalcBoxSizeBytes() (uint32, error) {
 	res := C.ergo_lib_ergo_box_candidate_builder_calc_box_size_bytes(b.p)
+	runtime.KeepAlive(b)
 	err := newError(res.error)
 	if err.isError() {
 		return 0, err.error()
@@ -99,6 +107,7 @@ func (b *boxCandidateBuilder) CalcBoxSizeBytes() (uint32, error) {
 func (b *boxCandidateBuilder) CalcMinBoxValue() (BoxValue, error) {
 	var p C.BoxValuePtr
 	errPtr := C.ergo_lib_ergo_box_candidate_calc_min_box_value(b.p, &p)
+	runtime.KeepAlive(b)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -109,11 +118,14 @@ func (b *boxCandidateBuilder) CalcMinBoxValue() (BoxValue, error) {
 
 func (b *boxCandidateBuilder) SetRegisterValue(registerId nonMandatoryRegisterId, constant Constant) {
 	C.ergo_lib_ergo_box_candidate_builder_set_register_value(b.p, C.uchar(registerId), constant.pointer())
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(constant)
 }
 
 func (b *boxCandidateBuilder) RegisterValue(registerId nonMandatoryRegisterId) (Constant, error) {
 	var p C.ConstantPtr
 	res := C.ergo_lib_ergo_box_candidate_builder_register_value(b.p, C.uchar(registerId), &p)
+	runtime.KeepAlive(b)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -128,6 +140,7 @@ func (b *boxCandidateBuilder) RegisterValue(registerId nonMandatoryRegisterId) (
 
 func (b *boxCandidateBuilder) DeleteRegisterValue(registerId nonMandatoryRegisterId) {
 	C.ergo_lib_ergo_box_candidate_builder_delete_register_value(b.p, C.uchar(registerId))
+	runtime.KeepAlive(b)
 }
 
 func (b *boxCandidateBuilder) MintToken(token Token, tokenName string, tokenDesc string, numDecimals uint32) {
@@ -138,16 +151,22 @@ func (b *boxCandidateBuilder) MintToken(token Token, tokenName string, tokenDesc
 	defer C.free(unsafe.Pointer(tknDescStr))
 
 	C.ergo_lib_ergo_box_candidate_builder_mint_token(b.p, token.pointer(), tknNameStr, tknDescStr, C.uintptr_t(numDecimals))
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(token)
 }
 
 func (b *boxCandidateBuilder) AddToken(tokenId TokenId, tokenAmount TokenAmount) {
 	C.ergo_lib_ergo_box_candidate_builder_add_token(b.p, tokenId.pointer(), tokenAmount.pointer())
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(tokenId)
+	runtime.KeepAlive(tokenAmount)
 }
 
 func (b *boxCandidateBuilder) Build() (BoxCandidate, error) {
 	var p C.ErgoBoxCandidatePtr
 
 	errPtr := C.ergo_lib_ergo_box_candidate_builder_build(b.p, &p)
+	runtime.KeepAlive(b)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()

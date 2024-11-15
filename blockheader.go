@@ -51,6 +51,7 @@ func (b *blockHeader) BlockId() BlockId {
 	var p C.BlockIdPtr
 
 	C.ergo_lib_block_header_id(b.p, &p)
+	runtime.KeepAlive(b)
 
 	bi := &blockId{p: p}
 
@@ -59,6 +60,8 @@ func (b *blockHeader) BlockId() BlockId {
 
 func (b *blockHeader) Equals(blockHeader BlockHeader) bool {
 	res := C.ergo_lib_block_header_eq(b.p, blockHeader.pointer())
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(blockHeader)
 	return bool(res)
 }
 
@@ -107,6 +110,8 @@ func NewBlockId(s string) (BlockId, error) {
 
 func (b *blockId) Equals(blockId BlockId) bool {
 	res := C.ergo_lib_block_id_eq(b.p, blockId.pointer())
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(blockId)
 	return bool(res)
 }
 
@@ -151,6 +156,7 @@ func NewBlockHeaders() BlockHeaders {
 
 func (b *blockHeaders) Len() int {
 	res := C.ergo_lib_block_headers_len(b.p)
+	runtime.KeepAlive(b)
 	return int(res)
 }
 
@@ -158,6 +164,7 @@ func (b *blockHeaders) Get(index int) (BlockHeader, error) {
 	var p C.BlockHeaderPtr
 
 	res := C.ergo_lib_block_headers_get(b.p, C.uintptr_t(index), &p)
+	runtime.KeepAlive(b)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -173,6 +180,8 @@ func (b *blockHeaders) Get(index int) (BlockHeader, error) {
 
 func (b *blockHeaders) Add(blockHeader BlockHeader) {
 	C.ergo_lib_block_headers_add(blockHeader.pointer(), b.p)
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(blockHeader)
 }
 
 func (b *blockHeaders) All() iter.Seq2[int, BlockHeader] {
@@ -186,6 +195,7 @@ func (b *blockHeaders) All() iter.Seq2[int, BlockHeader] {
 				return
 			}
 		}
+		runtime.KeepAlive(b)
 	}
 }
 
@@ -230,6 +240,7 @@ func NewBlockIds() BlockIds {
 
 func (b *blockIds) Len() int {
 	res := C.ergo_lib_block_ids_len(b.p)
+	runtime.KeepAlive(b)
 	return int(res)
 }
 
@@ -237,6 +248,7 @@ func (b *blockIds) Get(index int) (BlockId, error) {
 	var p C.BlockIdPtr
 
 	res := C.ergo_lib_block_ids_get(b.p, C.uintptr_t(index), &p)
+	runtime.KeepAlive(b)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -252,6 +264,8 @@ func (b *blockIds) Get(index int) (BlockId, error) {
 
 func (b *blockIds) Add(blockId BlockId) {
 	C.ergo_lib_block_ids_add(blockId.pointer(), b.p)
+	runtime.KeepAlive(b)
+	runtime.KeepAlive(blockId)
 }
 
 func (b *blockIds) All() iter.Seq2[int, BlockId] {
@@ -265,6 +279,7 @@ func (b *blockIds) All() iter.Seq2[int, BlockId] {
 				return
 			}
 		}
+		runtime.KeepAlive(b)
 	}
 }
 

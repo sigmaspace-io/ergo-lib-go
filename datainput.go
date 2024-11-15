@@ -29,6 +29,7 @@ func newDataInput(d *dataInput) DataInput {
 func NewDataInput(boxId BoxId) DataInput {
 	var p C.DataInputPtr
 	C.ergo_lib_data_input_new(boxId.pointer(), &p)
+	runtime.KeepAlive(boxId)
 	d := &dataInput{p: p}
 	return newDataInput(d)
 }
@@ -36,6 +37,7 @@ func NewDataInput(boxId BoxId) DataInput {
 func (d *dataInput) BoxId() BoxId {
 	var p C.BoxIdPtr
 	C.ergo_lib_data_input_box_id(d.p, &p)
+	runtime.KeepAlive(d)
 	bi := &boxId{p: p}
 	return newBoxId(bi)
 }
@@ -80,6 +82,7 @@ func NewDataInputs() DataInputs {
 
 func (d *dataInputs) Len() int {
 	res := C.ergo_lib_data_inputs_len(d.p)
+	runtime.KeepAlive(d)
 	return int(res)
 }
 
@@ -87,6 +90,7 @@ func (d *dataInputs) Get(index int) (DataInput, error) {
 	var p C.DataInputPtr
 
 	res := C.ergo_lib_data_inputs_get(d.p, C.uintptr_t(index), &p)
+	runtime.KeepAlive(d)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -102,6 +106,8 @@ func (d *dataInputs) Get(index int) (DataInput, error) {
 
 func (d *dataInputs) Add(dataInput DataInput) {
 	C.ergo_lib_data_inputs_add(dataInput.pointer(), d.p)
+	runtime.KeepAlive(d)
+	runtime.KeepAlive(dataInput)
 }
 
 func (d *dataInputs) All() iter.Seq2[int, DataInput] {
@@ -115,6 +121,7 @@ func (d *dataInputs) All() iter.Seq2[int, DataInput] {
 				return
 			}
 		}
+		runtime.KeepAlive(d)
 	}
 }
 

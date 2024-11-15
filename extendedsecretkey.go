@@ -53,6 +53,7 @@ func NewExtendedSecretKey(secretKeyBytes []byte, chainCode []byte, derivationPat
 
 	var p C.ExtSecretKeyPtr
 	errPtr := C.ergo_lib_ext_secret_key_new((*C.uchar)(secretKeyByteData), (*C.uchar)(chainCodeByteData), derivationPath.pointer(), &p)
+	runtime.KeepAlive(derivationPath)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -94,6 +95,7 @@ func (e *extendedSecretKey) Child(index string) (ExtendedSecretKey, error) {
 func (e *extendedSecretKey) Path() DerivationPath {
 	var p C.DerivationPathPtr
 	C.ergo_lib_ext_secret_key_path(e.p, &p)
+	runtime.KeepAlive(e)
 	d := &derivationPath{p: p}
 	return newDerivationPath(d)
 }
@@ -101,6 +103,7 @@ func (e *extendedSecretKey) Path() DerivationPath {
 func (e *extendedSecretKey) SecretKey() SecretKey {
 	var p C.SecretKeyPtr
 	C.ergo_lib_ext_secret_key_get_secret_key(e.p, &p)
+	runtime.KeepAlive(e)
 	s := &secretKey{p: p}
 	return newSecretKey(s)
 }
@@ -108,6 +111,7 @@ func (e *extendedSecretKey) SecretKey() SecretKey {
 func (e *extendedSecretKey) ExtendedPublicKey() ExtendedPublicKey {
 	var p C.ExtPubKeyPtr
 	C.ergo_lib_ext_secret_key_public_key(e.p, &p)
+	runtime.KeepAlive(e)
 	ep := &extendedPublicKey{p: p}
 	return newExtendedPublicKey(ep)
 }
@@ -115,6 +119,8 @@ func (e *extendedSecretKey) ExtendedPublicKey() ExtendedPublicKey {
 func (e *extendedSecretKey) Derive(derivationPath DerivationPath) (ExtendedSecretKey, error) {
 	var p C.ExtSecretKeyPtr
 	errPtr := C.ergo_lib_ext_secret_key_derive(e.p, derivationPath.pointer(), &p)
+	runtime.KeepAlive(derivationPath)
+	runtime.KeepAlive(e)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()

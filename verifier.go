@@ -4,7 +4,10 @@ package ergo
 #include "ergo.h"
 */
 import "C"
-import "unsafe"
+import (
+	"runtime"
+	"unsafe"
+)
 
 // VerifySignature verifies that the signature is presented to satisfy SigmaProp conditions
 func VerifySignature(address Address, message []byte, signature SignedMessage) (bool, error) {
@@ -12,6 +15,8 @@ func VerifySignature(address Address, message []byte, signature SignedMessage) (
 	defer C.free(unsafe.Pointer(byteData))
 
 	res := C.ergo_lib_verify_signature(address.pointer(), (*C.uchar)(byteData), C.uintptr_t(len(message)), signature.pointer())
+	runtime.KeepAlive(address)
+	runtime.KeepAlive(signature)
 	err := newError(res.error)
 	if err.isError() {
 		return false, err.error()

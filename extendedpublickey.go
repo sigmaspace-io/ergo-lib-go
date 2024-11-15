@@ -48,6 +48,7 @@ func NewExtendedPublicKey(publicKeyBytes []byte, chainCode []byte, derivationPat
 
 	var p C.ExtPubKeyPtr
 	errPtr := C.ergo_lib_ext_pub_key_new((*C.uchar)(publicKeyByteData), (*C.uchar)(chainCodeByteData), derivationPath.pointer(), &p)
+	runtime.KeepAlive(derivationPath)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -60,6 +61,7 @@ func NewExtendedPublicKey(publicKeyBytes []byte, chainCode []byte, derivationPat
 func (e *extendedPublicKey) Child(childIndex uint32) (ExtendedPublicKey, error) {
 	var p C.ExtPubKeyPtr
 	errPtr := C.ergo_lib_ext_pub_key_child(e.p, C.uint32_t(childIndex), &p)
+	runtime.KeepAlive(e)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -70,6 +72,8 @@ func (e *extendedPublicKey) Child(childIndex uint32) (ExtendedPublicKey, error) 
 func (e *extendedPublicKey) Derive(derivationPath DerivationPath) (ExtendedPublicKey, error) {
 	var p C.ExtPubKeyPtr
 	errPtr := C.ergo_lib_ext_pub_key_derive(e.p, derivationPath.pointer(), &p)
+	runtime.KeepAlive(e)
+	runtime.KeepAlive(derivationPath)
 	err := newError(errPtr)
 	if err.isError() {
 		return nil, err.error()
@@ -80,6 +84,7 @@ func (e *extendedPublicKey) Derive(derivationPath DerivationPath) (ExtendedPubli
 func (e *extendedPublicKey) Address() Address {
 	var p C.AddressPtr
 	C.ergo_lib_ext_pub_key_address(e.p, &p)
+	runtime.KeepAlive(e)
 	a := &address{p: p}
 	return newAddress(a)
 }

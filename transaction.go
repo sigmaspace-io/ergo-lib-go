@@ -51,6 +51,7 @@ func (t *txId) String() (string, error) {
 	var outTxIdStr *C.char
 
 	errPtr := C.ergo_lib_tx_id_to_str(t.p, &outTxIdStr)
+	runtime.KeepAlive(t)
 	err := newError(errPtr)
 	if err.isError() {
 		return "", err.error()
@@ -62,6 +63,8 @@ func (t *txId) String() (string, error) {
 
 func (t *txId) Equals(txId TxId) bool {
 	res := C.ergo_lib_tx_id_eq(t.p, txId.pointer())
+	runtime.KeepAlive(t)
+	runtime.KeepAlive(txId)
 	return bool(res)
 }
 
@@ -129,6 +132,8 @@ func NewHintsBag() HintsBag {
 
 func (h *hintsBag) Add(hint CommitmentHint) {
 	C.ergo_lib_hints_bag_add_commitment(h.p, hint.pointer())
+	runtime.KeepAlive(h)
+	runtime.KeepAlive(hint)
 }
 
 func (h *hintsBag) Len() int {
@@ -140,6 +145,7 @@ func (h *hintsBag) Get(index int) (CommitmentHint, error) {
 	var p C.CommitmentHintPtr
 
 	res := C.ergo_lib_hints_bag_get(h.p, C.uintptr_t(index), &p)
+	runtime.KeepAlive(h)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -164,6 +170,7 @@ func (h *hintsBag) All() iter.Seq2[int, CommitmentHint] {
 				return
 			}
 		}
+		runtime.KeepAlive(h)
 	}
 }
 
@@ -204,11 +211,14 @@ func NewTransactionHintsBag() TransactionHintsBag {
 
 func (t *transactionHintsBag) AddHintsForInput(index uint32, hintsBag HintsBag) {
 	C.ergo_lib_transaction_hints_bag_add_hints_for_input(t.p, C.uintptr_t(index), hintsBag.pointer())
+	runtime.KeepAlive(t)
+	runtime.KeepAlive(hintsBag)
 }
 
 func (t *transactionHintsBag) AllHintsForInput(index uint32) HintsBag {
 	var p C.HintsBagPtr
 	C.ergo_lib_transaction_hints_bag_all_hints_for_input(t.p, C.uintptr_t(index), &p)
+	runtime.KeepAlive(t)
 	h := &hintsBag{p: p}
 	return newHintsBag(h)
 }
@@ -239,6 +249,12 @@ func ExtractHintsFromSignedTransaction(
 		realPropositions.pointer(),
 		simulatedPropositions.pointer(),
 		&p)
+	runtime.KeepAlive(transaction)
+	runtime.KeepAlive(stateContext)
+	runtime.KeepAlive(boxesToSpend)
+	runtime.KeepAlive(dataBoxes)
+	runtime.KeepAlive(realPropositions)
+	runtime.KeepAlive(simulatedPropositions)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -297,6 +313,7 @@ func NewUnsignedTransactionFromJson(json string) (UnsignedTransaction, error) {
 func (u *unsignedTransaction) TxId() TxId {
 	var p C.TxIdPtr
 	C.ergo_lib_unsigned_tx_id(u.p, &p)
+	runtime.KeepAlive(u)
 	ti := &txId{p: p}
 	return newTxId(ti)
 }
@@ -304,6 +321,7 @@ func (u *unsignedTransaction) TxId() TxId {
 func (u *unsignedTransaction) UnsignedInputs() UnsignedInputs {
 	var p C.UnsignedInputsPtr
 	C.ergo_lib_unsigned_tx_inputs(u.p, &p)
+	runtime.KeepAlive(u)
 	ui := &unsignedInputs{p: p}
 	return newUnsignedInputs(ui)
 }
@@ -311,6 +329,7 @@ func (u *unsignedTransaction) UnsignedInputs() UnsignedInputs {
 func (u *unsignedTransaction) DataInputs() DataInputs {
 	var p C.DataInputsPtr
 	C.ergo_lib_unsigned_tx_data_inputs(u.p, &p)
+	runtime.KeepAlive(u)
 	di := &dataInputs{p: p}
 	return newDataInputs(di)
 }
@@ -318,6 +337,7 @@ func (u *unsignedTransaction) DataInputs() DataInputs {
 func (u *unsignedTransaction) OutputCandidates() BoxCandidates {
 	var p C.ErgoBoxCandidatesPtr
 	C.ergo_lib_unsigned_tx_output_candidates(u.p, &p)
+	runtime.KeepAlive(u)
 	bc := &boxCandidates{p: p}
 	return newBoxCandidates(bc)
 }
@@ -327,6 +347,7 @@ func (u *unsignedTransaction) Json() (string, error) {
 
 	errPtr := C.ergo_lib_unsigned_tx_to_json(u.p, &outStr)
 	defer C.ergo_lib_delete_string(outStr)
+	runtime.KeepAlive(u)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -343,6 +364,7 @@ func (u *unsignedTransaction) JsonEIP12() (string, error) {
 
 	errPtr := C.ergo_lib_unsigned_tx_to_json_eip12(u.p, &outStr)
 	defer C.ergo_lib_delete_string(outStr)
+	runtime.KeepAlive(u)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -405,6 +427,8 @@ func NewTransaction(unsignedTx UnsignedTransaction, proofs ByteArrays) (Transact
 	var p C.TransactionPtr
 
 	errPtr := C.ergo_lib_tx_from_unsigned_tx(unsignedTx.pointer(), proofs.pointer(), &p)
+	runtime.KeepAlive(unsignedTx)
+	runtime.KeepAlive(proofs)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -436,6 +460,7 @@ func NewTransactionFromJson(json string) (Transaction, error) {
 func (t *transaction) TxId() TxId {
 	var p C.TxIdPtr
 	C.ergo_lib_tx_id(t.p, &p)
+	runtime.KeepAlive(t)
 	ti := &txId{p: p}
 	return newTxId(ti)
 }
@@ -443,6 +468,7 @@ func (t *transaction) TxId() TxId {
 func (t *transaction) Inputs() Inputs {
 	var p C.InputsPtr
 	C.ergo_lib_tx_inputs(t.p, &p)
+	runtime.KeepAlive(t)
 	i := &inputs{p: p}
 	return newInputs(i)
 }
@@ -450,6 +476,7 @@ func (t *transaction) Inputs() Inputs {
 func (t *transaction) DataInputs() DataInputs {
 	var p C.DataInputsPtr
 	C.ergo_lib_tx_data_inputs(t.p, &p)
+	runtime.KeepAlive(t)
 	di := &dataInputs{p: p}
 	return newDataInputs(di)
 }
@@ -457,6 +484,7 @@ func (t *transaction) DataInputs() DataInputs {
 func (t *transaction) OutputCandidates() BoxCandidates {
 	var p C.ErgoBoxCandidatesPtr
 	C.ergo_lib_tx_output_candidates(t.p, &p)
+	runtime.KeepAlive(t)
 	bc := &boxCandidates{p: p}
 	return newBoxCandidates(bc)
 }
@@ -464,6 +492,7 @@ func (t *transaction) OutputCandidates() BoxCandidates {
 func (t *transaction) Outputs() Boxes {
 	var p C.ErgoBoxesPtr
 	C.ergo_lib_tx_outputs(t.p, &p)
+	runtime.KeepAlive(t)
 	b := &boxes{p: p}
 	return newBoxes(b)
 }
@@ -473,6 +502,7 @@ func (t *transaction) Json() (string, error) {
 
 	errPtr := C.ergo_lib_tx_to_json(t.p, &outStr)
 	defer C.ergo_lib_delete_string(outStr)
+	runtime.KeepAlive(t)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -489,6 +519,7 @@ func (t *transaction) JsonEIP12() (string, error) {
 
 	errPtr := C.ergo_lib_tx_to_json_eip12(t.p, &outStr)
 	defer C.ergo_lib_delete_string(outStr)
+	runtime.KeepAlive(t)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -502,6 +533,10 @@ func (t *transaction) JsonEIP12() (string, error) {
 
 func (t *transaction) Validate(stateContext StateContext, boxesToSpent Boxes, dataBoxes Boxes) error {
 	errPtr := C.ergo_lib_tx_validate(t.p, stateContext.pointer(), boxesToSpent.pointer(), dataBoxes.pointer())
+	runtime.KeepAlive(t)
+	runtime.KeepAlive(dataBoxes)
+	runtime.KeepAlive(stateContext)
+	runtime.KeepAlive(boxesToSpent)
 	err := newError(errPtr)
 	if err.isError() {
 		return err.error()

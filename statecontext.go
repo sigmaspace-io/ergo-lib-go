@@ -27,6 +27,9 @@ func NewStateContext(preHeader PreHeader, headers BlockHeaders, parameters Param
 	var p C.ErgoStateContextPtr
 
 	errPtr := C.ergo_lib_ergo_state_context_new(preHeader.pointer(), headers.pointer(), parameters.pointer(), &p)
+	runtime.KeepAlive(preHeader)
+	runtime.KeepAlive(headers)
+	runtime.KeepAlive(parameters)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -40,6 +43,8 @@ func NewStateContext(preHeader PreHeader, headers BlockHeaders, parameters Param
 
 func (s *stateContext) Equals(stateContext StateContext) bool {
 	res := C.ergo_lib_ergo_state_context_eq(s.p, stateContext.pointer())
+	runtime.KeepAlive(s)
+	runtime.KeepAlive(stateContext)
 	return bool(res)
 }
 

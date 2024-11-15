@@ -37,6 +37,10 @@ func NewReducedTransaction(unsignedTx UnsignedTransaction, boxesToSpent Boxes, d
 	var p C.ReducedTransactionPtr
 
 	errPtr := C.ergo_lib_reduced_tx_from_unsigned_tx(unsignedTx.pointer(), boxesToSpent.pointer(), dataBoxes.pointer(), stateContext.pointer(), &p)
+	runtime.KeepAlive(unsignedTx)
+	runtime.KeepAlive(boxesToSpent)
+	runtime.KeepAlive(dataBoxes)
+	runtime.KeepAlive(stateContext)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -50,6 +54,7 @@ func NewReducedTransaction(unsignedTx UnsignedTransaction, boxesToSpent Boxes, d
 func (r *reducedTransaction) UnsignedTransaction() UnsignedTransaction {
 	var p C.UnsignedTransactionPtr
 	C.ergo_lib_reduced_tx_unsigned_tx(r.p, &p)
+	runtime.KeepAlive(r)
 	ut := &unsignedTransaction{p: p}
 	return newUnsignedTransaction(ut)
 }
@@ -91,6 +96,7 @@ func (p *propositions) Add(bytes []byte) error {
 	defer C.free(unsafe.Pointer(byteData))
 
 	errPtr := C.ergo_lib_propositions_add_proposition_from_bytes(p.p, (*C.uchar)(byteData), C.uintptr_t(len(bytes)))
+	runtime.KeepAlive(p)
 	err := newError(errPtr)
 	if err.isError() {
 		return err.error()

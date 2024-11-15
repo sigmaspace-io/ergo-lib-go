@@ -64,6 +64,7 @@ func (t *tree) Base16() (string, error) {
 	var outStr *C.char
 
 	errPtr := C.ergo_lib_ergo_tree_to_base16_bytes(t.p, &outStr)
+	runtime.KeepAlive(t)
 	defer C.ergo_lib_delete_string(outStr)
 	err := newError(errPtr)
 
@@ -80,6 +81,7 @@ func (t *tree) Address() (Address, error) {
 	var p C.AddressPtr
 
 	errPtr := C.ergo_lib_address_from_ergo_tree(t.p, &p)
+	runtime.KeepAlive(t)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -94,6 +96,7 @@ func (t *tree) Address() (Address, error) {
 func (t *tree) TemplateBytesLength() (int, error) {
 	var returnNum C.ReturnNum_usize
 	returnNum = C.ergo_lib_ergo_tree_template_bytes_len(t.p)
+	runtime.KeepAlive(t)
 	err := newError(returnNum.error)
 
 	if err.isError() {
@@ -114,6 +117,7 @@ func (t *tree) TemplateHash() (string, error) {
 	defer C.free(unsafe.Pointer(output))
 
 	errPtr := C.ergo_lib_ergo_tree_template_bytes(t.p, (*C.uint8_t)(output))
+	runtime.KeepAlive(t)
 	err := newError(errPtr)
 
 	if err.isError() {
@@ -129,6 +133,7 @@ func (t *tree) TemplateHash() (string, error) {
 func (t *tree) ConstantsLength() (int, error) {
 	var returnNum C.ReturnNum_usize
 	returnNum = C.ergo_lib_ergo_tree_constants_len(t.p)
+	runtime.KeepAlive(t)
 	err := newError(returnNum.error)
 
 	if err.isError() {
@@ -146,6 +151,7 @@ func (t *tree) Constant(index int) (Constant, error) {
 	indexNumber := C.uintptr_t(index)
 
 	returnOption = C.ergo_lib_ergo_tree_get_constant(t.p, indexNumber, &constantOut)
+	runtime.KeepAlive(t)
 	err := newError(returnOption.error)
 
 	if err.isError() {
@@ -170,11 +176,14 @@ func (t *tree) Constants() ([]Constant, error) {
 		}
 		constants = append(constants, ergoTreeConstant)
 	}
+	runtime.KeepAlive(t)
 	return constants, nil
 }
 
 func (t *tree) Equals(tree Tree) bool {
 	res := C.ergo_lib_ergo_tree_eq(t.p, tree.pointer())
+	runtime.KeepAlive(t)
+	runtime.KeepAlive(tree)
 	return bool(res)
 }
 

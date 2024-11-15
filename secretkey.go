@@ -62,6 +62,7 @@ func NewSecretKeyFromBytes(bytes []byte) (SecretKey, error) {
 func (s *secretKey) Address() Address {
 	var p C.AddressPtr
 	C.ergo_lib_secret_key_get_address(s.p, &p)
+	runtime.KeepAlive(s)
 	a := &address{p}
 	return newAddress(a)
 }
@@ -70,6 +71,7 @@ func (s *secretKey) Bytes() []byte {
 	bytes := C.malloc(C.uintptr_t(32))
 	C.ergo_lib_secret_key_to_bytes(s.p, (*C.uint8_t)(bytes))
 	defer C.free(unsafe.Pointer(bytes))
+	runtime.KeepAlive(s)
 	result := C.GoBytes(bytes, C.int(32))
 	return result
 }
@@ -114,6 +116,7 @@ func NewSecretKeys() SecretKeys {
 
 func (s *secretKeys) Len() int {
 	res := C.ergo_lib_secret_keys_len(s.p)
+	runtime.KeepAlive(s)
 	return int(res)
 }
 
@@ -121,6 +124,7 @@ func (s *secretKeys) Get(index int) (SecretKey, error) {
 	var p C.SecretKeyPtr
 
 	res := C.ergo_lib_secret_keys_get(s.p, C.uintptr_t(index), &p)
+	runtime.KeepAlive(s)
 	err := newError(res.error)
 	if err.isError() {
 		return nil, err.error()
@@ -136,6 +140,8 @@ func (s *secretKeys) Get(index int) (SecretKey, error) {
 
 func (s *secretKeys) Add(secretKey SecretKey) {
 	C.ergo_lib_secret_keys_add(secretKey.pointer(), s.p)
+	runtime.KeepAlive(s)
+	runtime.KeepAlive(secretKey)
 }
 
 func (s *secretKeys) All() iter.Seq2[int, SecretKey] {
@@ -149,6 +155,7 @@ func (s *secretKeys) All() iter.Seq2[int, SecretKey] {
 				return
 			}
 		}
+		runtime.KeepAlive(s)
 	}
 }
 
