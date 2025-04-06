@@ -37,7 +37,7 @@ type constant struct {
 }
 
 func newConstant(c *constant) Constant {
-	runtime.SetFinalizer(c, finalizeConstant)
+	runtime.AddCleanup(c, finalizeConstant, c.p)
 	return c
 }
 
@@ -242,6 +242,6 @@ func (c *constant) pointer() C.ConstantPtr {
 	return c.p
 }
 
-func finalizeConstant(c *constant) {
-	C.ergo_lib_constant_delete(c.p)
+func finalizeConstant(p C.ConstantPtr) {
+	C.ergo_lib_constant_delete(p)
 }

@@ -24,7 +24,7 @@ type blockHeader struct {
 }
 
 func newBlockHeader(b *blockHeader) BlockHeader {
-	runtime.SetFinalizer(b, finalizeBlockHeader)
+	runtime.AddCleanup(b, finalizeBlockHeader, b.p)
 	return b
 }
 
@@ -69,8 +69,8 @@ func (b *blockHeader) pointer() C.BlockHeaderPtr {
 	return b.p
 }
 
-func finalizeBlockHeader(b *blockHeader) {
-	C.ergo_lib_block_header_delete(b.p)
+func finalizeBlockHeader(p C.BlockHeaderPtr) {
+	C.ergo_lib_block_header_delete(p)
 }
 
 // BlockId represents the id of a BlockHeader
@@ -85,7 +85,7 @@ type blockId struct {
 }
 
 func newBlockId(b *blockId) BlockId {
-	runtime.SetFinalizer(b, finalizeBlockId)
+	runtime.AddCleanup(b, finalizeBlockId, b.p)
 	return b
 }
 
@@ -119,8 +119,8 @@ func (b *blockId) pointer() C.BlockIdPtr {
 	return b.p
 }
 
-func finalizeBlockId(b *blockId) {
-	C.ergo_lib_block_id_delete(b.p)
+func finalizeBlockId(p C.BlockIdPtr) {
+	C.ergo_lib_block_id_delete(p)
 }
 
 // BlockHeaders an ordered collection of BlockHeader
@@ -141,7 +141,7 @@ type blockHeaders struct {
 }
 
 func newBlockHeaders(b *blockHeaders) BlockHeaders {
-	runtime.SetFinalizer(b, finalizeBlockHeaders)
+	runtime.AddCleanup(b, finalizeBlockHeaders, b.p)
 	return b
 }
 
@@ -203,8 +203,8 @@ func (b *blockHeaders) pointer() C.BlockHeadersPtr {
 	return b.p
 }
 
-func finalizeBlockHeaders(b *blockHeaders) {
-	C.ergo_lib_block_headers_delete(b.p)
+func finalizeBlockHeaders(p C.BlockHeadersPtr) {
+	C.ergo_lib_block_headers_delete(p)
 }
 
 // BlockIds an ordered collection of BlockId
@@ -224,7 +224,7 @@ type blockIds struct {
 }
 
 func newBlockIds(b *blockIds) BlockIds {
-	runtime.SetFinalizer(b, finalizeBlockIds)
+	runtime.AddCleanup(b, finalizeBlockIds, b.p)
 	return b
 }
 
@@ -283,6 +283,6 @@ func (b *blockIds) All() iter.Seq2[int, BlockId] {
 	}
 }
 
-func finalizeBlockIds(b *blockIds) {
-	C.ergo_lib_block_ids_delete(b.p)
+func finalizeBlockIds(p C.BlockIdsPtr) {
+	C.ergo_lib_block_ids_delete(p)
 }

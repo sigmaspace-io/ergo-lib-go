@@ -18,7 +18,7 @@ type parameters struct {
 }
 
 func newParameters(p *parameters) Parameters {
-	runtime.SetFinalizer(p, finalizeParameters)
+	runtime.AddCleanup(p, finalizeParameters, p.p)
 	return p
 }
 
@@ -77,6 +77,6 @@ func (p *parameters) pointer() C.ParametersPtr {
 	return p.p
 }
 
-func finalizeParameters(p *parameters) {
-	C.ergo_lib_parameters_delete(p.p)
+func finalizeParameters(p C.ParametersPtr) {
+	C.ergo_lib_parameters_delete(p)
 }

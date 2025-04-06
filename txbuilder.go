@@ -35,7 +35,7 @@ type txBuilder struct {
 }
 
 func newTxBuilder(t *txBuilder) TxBuilder {
-	runtime.SetFinalizer(t, finalizeTxBuilder)
+	runtime.AddCleanup(t, finalizeTxBuilder, t.p)
 	return t
 }
 
@@ -148,8 +148,8 @@ func (t *txBuilder) Build() (UnsignedTransaction, error) {
 	return newUnsignedTransaction(ut), nil
 }
 
-func finalizeTxBuilder(t *txBuilder) {
-	C.ergo_lib_tx_builder_delete(t.p)
+func finalizeTxBuilder(p C.TxBuilderPtr) {
+	C.ergo_lib_tx_builder_delete(p)
 }
 
 // SuggestedTxFee returns the suggested transaction fee (semi-default value used across wallets and dApp as of Oct 2020)

@@ -21,7 +21,7 @@ type ergoError struct {
 func newError(err C.ErrorPtr) ergoError {
 	e := ergoError{p: err}
 
-	runtime.SetFinalizer(&e, finalizeError)
+	runtime.AddCleanup(&e, finalizeError, e.p)
 
 	return e
 }
@@ -43,6 +43,6 @@ func (e ergoError) error() error {
 	return errors.New(s)
 }
 
-func finalizeError(e *ergoError) {
-	C.ergo_lib_delete_error(e.p)
+func finalizeError(p C.ErrorPtr) {
+	C.ergo_lib_delete_error(p)
 }

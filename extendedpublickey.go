@@ -25,7 +25,7 @@ type extendedPublicKey struct {
 }
 
 func newExtendedPublicKey(e *extendedPublicKey) ExtendedPublicKey {
-	runtime.SetFinalizer(e, finalizeExtendedPublicKey)
+	runtime.AddCleanup(e, finalizeExtendedPublicKey, e.p)
 	return e
 }
 
@@ -93,6 +93,6 @@ func (e *extendedPublicKey) pointer() C.ExtPubKeyPtr {
 	return e.p
 }
 
-func finalizeExtendedPublicKey(e *extendedPublicKey) {
-	C.ergo_lib_ext_pub_key_delete(e.p)
+func finalizeExtendedPublicKey(p C.ExtPubKeyPtr) {
+	C.ergo_lib_ext_pub_key_delete(p)
 }

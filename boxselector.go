@@ -22,7 +22,7 @@ type boxSelection struct {
 }
 
 func newBoxSelection(b *boxSelection) BoxSelection {
-	runtime.SetFinalizer(b, finalizeBoxSelection)
+	runtime.AddCleanup(b, finalizeBoxSelection, b.p)
 	return b
 }
 
@@ -63,8 +63,8 @@ func (b *boxSelection) pointer() C.BoxSelectionPtr {
 	return b.p
 }
 
-func finalizeBoxSelection(b *boxSelection) {
-	C.ergo_lib_box_selection_delete(b.p)
+func finalizeBoxSelection(p C.BoxSelectionPtr) {
+	C.ergo_lib_box_selection_delete(p)
 }
 
 // SimpleBoxSelector is a naive box selector, collects inputs until target balance is reached
@@ -83,7 +83,7 @@ type simpleBoxSelector struct {
 }
 
 func newSimpleBoxSelector(s *simpleBoxSelector) SimpleBoxSelector {
-	runtime.SetFinalizer(s, finalizeSimpleBoxSelector)
+	runtime.AddCleanup(s, finalizeSimpleBoxSelector, s.p)
 	return s
 }
 
@@ -112,6 +112,6 @@ func (b *simpleBoxSelector) Select(inputs Boxes, targetBalance BoxValue, targetT
 	return newBoxSelection(bs), nil
 }
 
-func finalizeSimpleBoxSelector(s *simpleBoxSelector) {
-	C.ergo_lib_simple_box_selector_delete(s.p)
+func finalizeSimpleBoxSelector(p C.SimpleBoxSelectorPtr) {
+	C.ergo_lib_simple_box_selector_delete(p)
 }

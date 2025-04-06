@@ -47,7 +47,7 @@ type boxCandidateBuilder struct {
 }
 
 func newBoxCandidateBuilder(b *boxCandidateBuilder) BoxCandidateBuilder {
-	runtime.SetFinalizer(b, finalizeBoxCandidateBuilder)
+	runtime.AddCleanup(b, finalizeBoxCandidateBuilder, b.p)
 	return b
 }
 
@@ -176,6 +176,6 @@ func (b *boxCandidateBuilder) Build() (BoxCandidate, error) {
 	return newBoxCandidate(bc), nil
 }
 
-func finalizeBoxCandidateBuilder(b *boxCandidateBuilder) {
-	C.ergo_lib_ergo_box_candidate_builder_delete(b.p)
+func finalizeBoxCandidateBuilder(p C.ErgoBoxCandidateBuilderPtr) {
+	C.ergo_lib_ergo_box_candidate_builder_delete(p)
 }

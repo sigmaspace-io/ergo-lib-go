@@ -18,7 +18,7 @@ type batchMerkleProof struct {
 }
 
 func newBatchMerkleProof(b *batchMerkleProof) BatchMerkleProof {
-	runtime.SetFinalizer(b, finalizeBatchMerkleProof)
+	runtime.AddCleanup(b, finalizeBatchMerkleProof, b.p)
 	return b
 }
 
@@ -44,6 +44,6 @@ func (b *batchMerkleProof) Valid(expectedRoot []byte) bool {
 	return bool(res)
 }
 
-func finalizeBatchMerkleProof(b *batchMerkleProof) {
-	C.ergo_lib_batch_merkle_proof_delete(b.p)
+func finalizeBatchMerkleProof(p C.BatchMerkleProofPtr) {
+	C.ergo_lib_batch_merkle_proof_delete(p)
 }

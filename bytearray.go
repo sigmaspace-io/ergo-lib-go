@@ -19,7 +19,7 @@ type byteArray struct {
 }
 
 func newByteArray(b *byteArray) ByteArray {
-	runtime.SetFinalizer(b, finalizeByteArray)
+	runtime.AddCleanup(b, finalizeByteArray, b.p)
 	return b
 }
 
@@ -43,8 +43,8 @@ func (b *byteArray) pointer() C.ByteArrayPtr {
 	return b.p
 }
 
-func finalizeByteArray(b *byteArray) {
-	C.ergo_lib_byte_array_delete(b.p)
+func finalizeByteArray(p C.ByteArrayPtr) {
+	C.ergo_lib_byte_array_delete(p)
 }
 
 type ByteArrays interface {
@@ -60,7 +60,7 @@ type byteArrays struct {
 }
 
 func newByteArrays(b *byteArrays) ByteArrays {
-	runtime.SetFinalizer(b, finalizeByteArrays)
+	runtime.AddCleanup(b, finalizeByteArrays, b.p)
 	return b
 }
 
@@ -115,6 +115,6 @@ func (b *byteArrays) pointer() C.ByteArraysPtr {
 	return b.p
 }
 
-func finalizeByteArrays(b *byteArrays) {
-	C.ergo_lib_byte_arrays_delete(b.p)
+func finalizeByteArrays(p C.ByteArraysPtr) {
+	C.ergo_lib_byte_arrays_delete(p)
 }

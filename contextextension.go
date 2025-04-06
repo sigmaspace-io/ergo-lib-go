@@ -30,7 +30,7 @@ type contextExtension struct {
 }
 
 func newContextExtension(c *contextExtension) ContextExtension {
-	runtime.SetFinalizer(c, finalizeContextExtension)
+	runtime.AddCleanup(c, finalizeContextExtension, c.p)
 	return c
 }
 
@@ -120,6 +120,6 @@ func (c *contextExtension) pointer() C.ContextExtensionPtr {
 	return c.p
 }
 
-func finalizeContextExtension(c *contextExtension) {
-	C.ergo_lib_context_extension_delete(c.p)
+func finalizeContextExtension(p C.ContextExtensionPtr) {
+	C.ergo_lib_context_extension_delete(p)
 }

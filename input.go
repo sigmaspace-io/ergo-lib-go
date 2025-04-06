@@ -24,7 +24,7 @@ type unsignedInput struct {
 }
 
 func newUnsignedInput(u *unsignedInput) UnsignedInput {
-	runtime.SetFinalizer(u, finalizeUnsignedInput)
+	runtime.AddCleanup(u, finalizeUnsignedInput, u.p)
 	return u
 }
 
@@ -52,8 +52,8 @@ func (u *unsignedInput) pointer() C.UnsignedInputPtr {
 	return u.p
 }
 
-func finalizeUnsignedInput(u *unsignedInput) {
-	C.ergo_lib_unsigned_input_delete(u.p)
+func finalizeUnsignedInput(p C.UnsignedInputPtr) {
+	C.ergo_lib_unsigned_input_delete(p)
 }
 
 // Input represents signed inputs in signed transaction
@@ -70,7 +70,7 @@ type input struct {
 }
 
 func newInput(i *input) Input {
-	runtime.SetFinalizer(i, finalizeInput)
+	runtime.AddCleanup(i, finalizeInput, i.p)
 	return i
 }
 
@@ -98,8 +98,8 @@ func (i *input) pointer() C.InputPtr {
 	return i.p
 }
 
-func finalizeInput(i *input) {
-	C.ergo_lib_input_delete(i.p)
+func finalizeInput(p C.InputPtr) {
+	C.ergo_lib_input_delete(p)
 }
 
 // ProverResult represents proof of correctness of tx spending
@@ -117,7 +117,7 @@ type proverResult struct {
 }
 
 func newProverResult(pr *proverResult) ProverResult {
-	runtime.SetFinalizer(pr, finalizeProverResult)
+	runtime.AddCleanup(pr, finalizeProverResult, pr.p)
 	return pr
 }
 
@@ -160,8 +160,8 @@ func (pr *proverResult) Json() (string, error) {
 	return result, nil
 }
 
-func finalizeProverResult(pr *proverResult) {
-	C.ergo_lib_prover_result_delete(pr.p)
+func finalizeProverResult(p C.ProverResultPtr) {
+	C.ergo_lib_prover_result_delete(p)
 }
 
 // UnsignedInputs an ordered collection of UnsignedInput
@@ -181,7 +181,7 @@ type unsignedInputs struct {
 }
 
 func newUnsignedInputs(u *unsignedInputs) UnsignedInputs {
-	runtime.SetFinalizer(u, finalizeUnsignedInputs)
+	runtime.AddCleanup(u, finalizeUnsignedInputs, u.p)
 	return u
 }
 
@@ -235,8 +235,8 @@ func (u *unsignedInputs) All() iter.Seq2[int, UnsignedInput] {
 	}
 }
 
-func finalizeUnsignedInputs(u *unsignedInputs) {
-	C.ergo_lib_unsigned_inputs_delete(u.p)
+func finalizeUnsignedInputs(p C.UnsignedInputsPtr) {
+	C.ergo_lib_unsigned_inputs_delete(p)
 }
 
 // Inputs an ordered collection of Input
@@ -256,7 +256,7 @@ type inputs struct {
 }
 
 func newInputs(i *inputs) Inputs {
-	runtime.SetFinalizer(i, finalizeInputs)
+	runtime.AddCleanup(i, finalizeInputs, i.p)
 	return i
 }
 
@@ -310,6 +310,6 @@ func (i *inputs) All() iter.Seq2[int, Input] {
 	}
 }
 
-func finalizeInputs(i *inputs) {
-	C.ergo_lib_inputs_delete(i.p)
+func finalizeInputs(p C.InputsPtr) {
+	C.ergo_lib_inputs_delete(p)
 }

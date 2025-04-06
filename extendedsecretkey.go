@@ -30,7 +30,7 @@ type extendedSecretKey struct {
 }
 
 func newExtendedSecretKey(e *extendedSecretKey) ExtendedSecretKey {
-	runtime.SetFinalizer(e, finalizeExtendedSecretKey)
+	runtime.AddCleanup(e, finalizeExtendedSecretKey, e.p)
 	return e
 }
 
@@ -129,6 +129,6 @@ func (e *extendedSecretKey) Derive(derivationPath DerivationPath) (ExtendedSecre
 	return newExtendedSecretKey(es), nil
 }
 
-func finalizeExtendedSecretKey(e *extendedSecretKey) {
-	C.ergo_lib_ext_secret_key_delete(e.p)
+func finalizeExtendedSecretKey(p C.ExtSecretKeyPtr) {
+	C.ergo_lib_ext_secret_key_delete(p)
 }

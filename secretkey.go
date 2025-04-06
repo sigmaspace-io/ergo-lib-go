@@ -25,7 +25,7 @@ type secretKey struct {
 }
 
 func newSecretKey(s *secretKey) SecretKey {
-	runtime.SetFinalizer(s, finalizeSecretKey)
+	runtime.AddCleanup(s, finalizeSecretKey, s.p)
 	return s
 }
 
@@ -80,8 +80,8 @@ func (s *secretKey) pointer() C.SecretKeyPtr {
 	return s.p
 }
 
-func finalizeSecretKey(s *secretKey) {
-	C.ergo_lib_secret_key_delete(s.p)
+func finalizeSecretKey(p C.SecretKeyPtr) {
+	C.ergo_lib_secret_key_delete(p)
 }
 
 // SecretKeys an ordered collection of SecretKey
@@ -102,7 +102,7 @@ type secretKeys struct {
 }
 
 func newSecretKeys(s *secretKeys) SecretKeys {
-	runtime.SetFinalizer(s, finalizeSecretKeys)
+	runtime.AddCleanup(s, finalizeSecretKeys, s.p)
 	return s
 }
 
@@ -163,6 +163,6 @@ func (s *secretKeys) pointer() C.SecretKeysPtr {
 	return s.p
 }
 
-func finalizeSecretKeys(s *secretKeys) {
-	C.ergo_lib_secret_keys_delete(s.p)
+func finalizeSecretKeys(p C.SecretKeysPtr) {
+	C.ergo_lib_secret_keys_delete(p)
 }

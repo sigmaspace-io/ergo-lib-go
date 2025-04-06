@@ -27,7 +27,7 @@ type reducedTransaction struct {
 }
 
 func newReducedTransaction(r *reducedTransaction) ReducedTransaction {
-	runtime.SetFinalizer(r, finalizeReducedTransaction)
+	runtime.AddCleanup(r, finalizeReducedTransaction, r.p)
 	return r
 }
 
@@ -63,8 +63,8 @@ func (r *reducedTransaction) pointer() C.ReducedTransactionPtr {
 	return r.p
 }
 
-func finalizeReducedTransaction(r *reducedTransaction) {
-	C.ergo_lib_reduced_tx_delete(r.p)
+func finalizeReducedTransaction(p C.ReducedTransactionPtr) {
+	C.ergo_lib_reduced_tx_delete(p)
 }
 
 // Propositions list(public keys)
@@ -79,7 +79,7 @@ type propositions struct {
 }
 
 func newPropositions(p *propositions) Propositions {
-	runtime.SetFinalizer(p, finalizePropositions)
+	runtime.AddCleanup(p, finalizePropositions, p.p)
 	return p
 }
 
@@ -108,6 +108,6 @@ func (p *propositions) pointer() C.PropositionsPtr {
 	return p.p
 }
 
-func finalizePropositions(p *propositions) {
-	C.ergo_lib_propositions_delete(p.p)
+func finalizePropositions(p C.PropositionsPtr) {
+	C.ergo_lib_propositions_delete(p)
 }

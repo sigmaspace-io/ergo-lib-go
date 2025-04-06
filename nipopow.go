@@ -25,7 +25,7 @@ type nipopowProof struct {
 }
 
 func newNipopowProof(p *nipopowProof) NipopowProof {
-	runtime.SetFinalizer(p, finalizeNipopowProof)
+	runtime.AddCleanup(p, finalizeNipopowProof, p.p)
 	return p
 }
 
@@ -87,8 +87,8 @@ func (p *nipopowProof) pointer() C.NipopowProofPtr {
 	return p.p
 }
 
-func finalizeNipopowProof(p *nipopowProof) {
-	C.ergo_lib_nipopow_proof_delete(p.p)
+func finalizeNipopowProof(p C.NipopowProofPtr) {
+	C.ergo_lib_nipopow_proof_delete(p)
 }
 
 // NipopowVerifier a verifier for PoPow proofs. During its lifetime, it processes many proofs with the aim of
@@ -107,7 +107,7 @@ type nipopowVerifier struct {
 }
 
 func newNipopowVerifier(n *nipopowVerifier) NipopowVerifier {
-	runtime.SetFinalizer(n, finalizeNipopowVerifier)
+	runtime.AddCleanup(n, finalizeNipopowVerifier, n.p)
 	return n
 }
 
@@ -147,8 +147,8 @@ func (n *nipopowVerifier) Process(newProof NipopowProof) error {
 	return nil
 }
 
-func finalizeNipopowVerifier(n *nipopowVerifier) {
-	C.ergo_lib_nipopow_verifier_delete(n.p)
+func finalizeNipopowVerifier(p C.NipopowVerifierPtr) {
+	C.ergo_lib_nipopow_verifier_delete(p)
 }
 
 type PoPowHeader interface {
@@ -172,7 +172,7 @@ type poPowHeader struct {
 }
 
 func newPoPowHeader(p *poPowHeader) PoPowHeader {
-	runtime.SetFinalizer(p, finalizePoPowHeader)
+	runtime.AddCleanup(p, finalizePoPowHeader, p.p)
 	return p
 }
 
@@ -264,6 +264,6 @@ func (p *poPowHeader) pointer() C.PoPowHeaderPtr {
 	return p.p
 }
 
-func finalizePoPowHeader(p *poPowHeader) {
-	C.ergo_lib_popow_header_delete(p.p)
+func finalizePoPowHeader(p C.PoPowHeaderPtr) {
+	C.ergo_lib_popow_header_delete(p)
 }

@@ -41,7 +41,7 @@ type boxId struct {
 }
 
 func newBoxId(b *boxId) BoxId {
-	runtime.SetFinalizer(b, finalizeBoxId)
+	runtime.AddCleanup(b, finalizeBoxId, b.p)
 	return b
 }
 
@@ -85,8 +85,8 @@ func (b *boxId) pointer() C.BoxIdPtr {
 	return b.p
 }
 
-func finalizeBoxId(b *boxId) {
-	C.ergo_lib_box_id_delete(b.p)
+func finalizeBoxId(p C.BoxIdPtr) {
+	C.ergo_lib_box_id_delete(p)
 }
 
 // BoxValue in nanoERGs with bound checks
@@ -103,7 +103,7 @@ type boxValue struct {
 }
 
 func newBoxValue(b *boxValue) BoxValue {
-	runtime.SetFinalizer(b, finalizeBoxValue)
+	runtime.AddCleanup(b, finalizeBoxValue, b.p)
 	return b
 }
 
@@ -139,8 +139,8 @@ func (b *boxValue) pointer() C.BoxValuePtr {
 	return b.p
 }
 
-func finalizeBoxValue(b *boxValue) {
-	C.ergo_lib_box_value_delete(b.p)
+func finalizeBoxValue(p C.BoxValuePtr) {
+	C.ergo_lib_box_value_delete(p)
 }
 
 // SafeUserMinBoxValue returns recommended (safe) minimal BoxValue to use in case box size estimation is unavailable.
@@ -199,7 +199,7 @@ type boxCandidate struct {
 }
 
 func newBoxCandidate(b *boxCandidate) BoxCandidate {
-	runtime.SetFinalizer(b, finalizeBoxCandidate)
+	runtime.AddCleanup(b, finalizeBoxCandidate, b.p)
 	return b
 }
 
@@ -271,8 +271,8 @@ func (b *boxCandidate) pointer() C.ErgoBoxCandidatePtr {
 	return b.p
 }
 
-func finalizeBoxCandidate(b *boxCandidate) {
-	C.ergo_lib_ergo_box_candidate_delete(b.p)
+func finalizeBoxCandidate(p C.ErgoBoxCandidatePtr) {
+	C.ergo_lib_ergo_box_candidate_delete(p)
 }
 
 // Box that is taking part in some transaction on the chain Differs with BoxCandidate
@@ -306,7 +306,7 @@ type box struct {
 }
 
 func newBox(b *box) Box {
-	runtime.SetFinalizer(b, finalizeBox)
+	runtime.AddCleanup(b, finalizeBox, b.p)
 	return b
 }
 
@@ -467,8 +467,8 @@ func (b *box) pointer() C.ErgoBoxPtr {
 	return b.p
 }
 
-func finalizeBox(b *box) {
-	C.ergo_lib_ergo_box_delete(b.p)
+func finalizeBox(p C.ErgoBoxPtr) {
+	C.ergo_lib_ergo_box_delete(p)
 }
 
 // BoxAssetsData is a pair of value and tokens for a box
@@ -487,7 +487,7 @@ type boxAssetsData struct {
 }
 
 func newBoxAssetsData(b *boxAssetsData) BoxAssetsData {
-	runtime.SetFinalizer(b, finalizeBoxAssetsData)
+	runtime.AddCleanup(b, finalizeBoxAssetsData, b.p)
 	return b
 }
 
@@ -534,8 +534,8 @@ func (b *boxAssetsData) pointer() C.ErgoBoxAssetsDataPtr {
 	return b.p
 }
 
-func finalizeBoxAssetsData(b *boxAssetsData) {
-	C.ergo_lib_ergo_box_assets_data_delete(b.p)
+func finalizeBoxAssetsData(p C.ErgoBoxAssetsDataPtr) {
+	C.ergo_lib_ergo_box_assets_data_delete(p)
 }
 
 // BoxAssetsDataList is an ordered collection of BoxAssetsData
@@ -556,7 +556,7 @@ type boxAssetsDataList struct {
 }
 
 func newBoxAssetsDataList(b *boxAssetsDataList) BoxAssetsDataList {
-	runtime.SetFinalizer(b, finalizeBoxAssetsDataList)
+	runtime.AddCleanup(b, finalizeBoxAssetsDataList, b.p)
 	return b
 }
 
@@ -619,8 +619,8 @@ func (b *boxAssetsDataList) pointer() C.ErgoBoxAssetsDataListPtr {
 	return b.p
 }
 
-func finalizeBoxAssetsDataList(b *boxAssetsDataList) {
-	C.ergo_lib_ergo_box_assets_data_list_delete(b.p)
+func finalizeBoxAssetsDataList(p C.ErgoBoxAssetsDataListPtr) {
+	C.ergo_lib_ergo_box_assets_data_list_delete(p)
 }
 
 // BoxCandidates is an ordered collection of BoxCandidate
@@ -641,7 +641,7 @@ type boxCandidates struct {
 }
 
 func newBoxCandidates(b *boxCandidates) BoxCandidates {
-	runtime.SetFinalizer(b, finalizeBoxCandidates)
+	runtime.AddCleanup(b, finalizeBoxCandidates, b.p)
 	return b
 }
 
@@ -704,8 +704,8 @@ func (b *boxCandidates) pointer() C.ErgoBoxCandidatesPtr {
 	return b.p
 }
 
-func finalizeBoxCandidates(b *boxCandidates) {
-	C.ergo_lib_ergo_box_candidates_delete(b.p)
+func finalizeBoxCandidates(p C.ErgoBoxCandidatesPtr) {
+	C.ergo_lib_ergo_box_candidates_delete(p)
 }
 
 // Boxes an ordered collection of Box
@@ -726,7 +726,7 @@ type boxes struct {
 }
 
 func newBoxes(b *boxes) Boxes {
-	runtime.SetFinalizer(b, finalizeBoxes)
+	runtime.AddCleanup(b, finalizeBoxes, b.p)
 	return b
 }
 
@@ -789,6 +789,6 @@ func (b *boxes) pointer() C.ErgoBoxesPtr {
 	return b.p
 }
 
-func finalizeBoxes(b *boxes) {
-	C.ergo_lib_ergo_boxes_delete(b.p)
+func finalizeBoxes(p C.ErgoBoxesPtr) {
+	C.ergo_lib_ergo_boxes_delete(p)
 }

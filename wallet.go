@@ -36,7 +36,7 @@ func NewMnemonicGenerator(language string, strength uint32) (MnemonicGenerator, 
 	}
 
 	m := &mnemonicGenerator{p: p}
-	runtime.SetFinalizer(m, finalizeMnemonicGenerator)
+	runtime.AddCleanup(m, finalizeMnemonicGenerator, m.p)
 
 	return m, nil
 }
@@ -76,8 +76,8 @@ func (m *mnemonicGenerator) GenerateFromEntropy(entropy []byte) (string, error) 
 	return mnemonic, nil
 }
 
-func finalizeMnemonicGenerator(m *mnemonicGenerator) {
-	C.free(unsafe.Pointer(m.p))
+func finalizeMnemonicGenerator(p C.MnemonicGeneratorPtr) {
+	C.free(unsafe.Pointer(p))
 }
 
 type Wallet interface {
@@ -104,7 +104,7 @@ type wallet struct {
 }
 
 func newWallet(w *wallet) Wallet {
-	runtime.SetFinalizer(w, finalizeWallet)
+	runtime.AddCleanup(w, finalizeWallet, w.p)
 	return w
 }
 
@@ -252,8 +252,8 @@ func (w *wallet) SignMessageUsingP2PK(address Address, message []byte) (SignedMe
 	return newSignedMessage(sm), nil
 }
 
-func finalizeWallet(w *wallet) {
-	C.ergo_lib_wallet_delete(w.p)
+func finalizeWallet(p C.WalletPtr) {
+	C.ergo_lib_wallet_delete(p)
 }
 
 type SignedMessage interface {
@@ -265,7 +265,7 @@ type signedMessage struct {
 }
 
 func newSignedMessage(s *signedMessage) SignedMessage {
-	runtime.SetFinalizer(s, finalizeSignedMessage)
+	runtime.AddCleanup(s, finalizeSignedMessage, s.p)
 	return s
 }
 
@@ -273,6 +273,6 @@ func (s *signedMessage) pointer() C.SignedMessagePtr {
 	return s.p
 }
 
-func finalizeSignedMessage(s *signedMessage) {
-	C.ergo_lib_signed_message_delete(s.p)
+func finalizeSignedMessage(p C.SignedMessagePtr) {
+	C.ergo_lib_signed_message_delete(p)
 }

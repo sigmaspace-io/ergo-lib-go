@@ -24,7 +24,7 @@ type derivationPath struct {
 }
 
 func newDerivationPath(d *derivationPath) DerivationPath {
-	runtime.SetFinalizer(d, finalizeDerivationPath)
+	runtime.AddCleanup(d, finalizeDerivationPath, d.p)
 	return d
 }
 
@@ -91,6 +91,6 @@ func (d *derivationPath) pointer() C.DerivationPathPtr {
 	return d.p
 }
 
-func finalizeDerivationPath(d *derivationPath) {
-	C.ergo_lib_derivation_path_delete(d.p)
+func finalizeDerivationPath(p C.DerivationPathPtr) {
+	C.ergo_lib_derivation_path_delete(p)
 }

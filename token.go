@@ -24,7 +24,7 @@ type tokenId struct {
 }
 
 func newTokenId(t *tokenId) TokenId {
-	runtime.SetFinalizer(t, finalizeTokenId)
+	runtime.AddCleanup(t, finalizeTokenId, t.p)
 	return t
 }
 
@@ -63,8 +63,8 @@ func (t *tokenId) Equals(tokenId TokenId) bool {
 	return bool(res)
 }
 
-func finalizeTokenId(t *tokenId) {
-	C.ergo_lib_token_id_delete(t.p)
+func finalizeTokenId(p C.TokenIdPtr) {
+	C.ergo_lib_token_id_delete(p)
 }
 
 func (t *tokenId) Base16() string {
@@ -97,7 +97,7 @@ type tokenAmount struct {
 }
 
 func newTokenAmount(t *tokenAmount) TokenAmount {
-	runtime.SetFinalizer(t, finalizeTokenAmount)
+	runtime.AddCleanup(t, finalizeTokenAmount, t.p)
 	return t
 }
 
@@ -133,8 +133,8 @@ func (t *tokenAmount) pointer() C.TokenAmountPtr {
 	return t.p
 }
 
-func finalizeTokenAmount(t *tokenAmount) {
-	C.ergo_lib_token_amount_delete(t.p)
+func finalizeTokenAmount(p C.TokenAmountPtr) {
+	C.ergo_lib_token_amount_delete(p)
 }
 
 // Token represented with TokenId paired with its TokenAmount
@@ -155,7 +155,7 @@ type token struct {
 }
 
 func newToken(t *token) Token {
-	runtime.SetFinalizer(t, finalizeToken)
+	runtime.AddCleanup(t, finalizeToken, t.p)
 	return t
 }
 
@@ -218,8 +218,8 @@ func (t *token) pointer() C.TokenPtr {
 	return t.p
 }
 
-func finalizeToken(t *token) {
-	C.ergo_lib_token_delete(t.p)
+func finalizeToken(p C.TokenPtr) {
+	C.ergo_lib_token_delete(p)
 }
 
 // Tokens an ordered collection of Token
@@ -240,7 +240,7 @@ type tokens struct {
 }
 
 func newTokens(t *tokens) Tokens {
-	runtime.SetFinalizer(t, finalizeTokens)
+	runtime.AddCleanup(t, finalizeTokens, t.p)
 	return t
 }
 
@@ -300,6 +300,6 @@ func (t *tokens) pointer() C.TokensPtr {
 	return t.p
 }
 
-func finalizeTokens(t *tokens) {
-	C.ergo_lib_tokens_delete(t.p)
+func finalizeTokens(p C.TokensPtr) {
+	C.ergo_lib_tokens_delete(p)
 }

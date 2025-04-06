@@ -47,7 +47,7 @@ type address struct {
 }
 
 func newAddress(a *address) Address {
-	runtime.SetFinalizer(a, finalizeAddress)
+	runtime.AddCleanup(a, finalizeAddress, a.p)
 	return a
 }
 
@@ -127,6 +127,6 @@ func (a *address) pointer() C.AddressPtr {
 	return a.p
 }
 
-func finalizeAddress(a *address) {
-	C.ergo_lib_address_delete(a.p)
+func finalizeAddress(p C.AddressPtr) {
+	C.ergo_lib_address_delete(p)
 }

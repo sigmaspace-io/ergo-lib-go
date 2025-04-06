@@ -37,7 +37,7 @@ type tree struct {
 }
 
 func newTree(t *tree) Tree {
-	runtime.SetFinalizer(t, finalizeTree)
+	runtime.AddCleanup(t, finalizeTree, t.p)
 	return t
 }
 
@@ -191,6 +191,6 @@ func (t *tree) pointer() C.ErgoTreePtr {
 	return t.p
 }
 
-func finalizeTree(t *tree) {
-	C.ergo_lib_ergo_tree_delete(t.p)
+func finalizeTree(p C.ErgoTreePtr) {
+	C.ergo_lib_ergo_tree_delete(p)
 }

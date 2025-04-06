@@ -21,7 +21,7 @@ type dataInput struct {
 }
 
 func newDataInput(d *dataInput) DataInput {
-	runtime.SetFinalizer(d, finalizeDataInput)
+	runtime.AddCleanup(d, finalizeDataInput, d.p)
 	return d
 }
 
@@ -46,8 +46,8 @@ func (d *dataInput) pointer() C.DataInputPtr {
 	return d.p
 }
 
-func finalizeDataInput(d *dataInput) {
-	C.ergo_lib_data_input_delete(d.p)
+func finalizeDataInput(p C.DataInputPtr) {
+	C.ergo_lib_data_input_delete(p)
 }
 
 // DataInputs an ordered collection if DataInput
@@ -68,7 +68,7 @@ type dataInputs struct {
 }
 
 func newDataInputs(d *dataInputs) DataInputs {
-	runtime.SetFinalizer(d, finalizeDataInputs)
+	runtime.AddCleanup(d, finalizeDataInputs, d.p)
 	return d
 }
 
@@ -129,6 +129,6 @@ func (d *dataInputs) pointer() C.DataInputsPtr {
 	return d.p
 }
 
-func finalizeDataInputs(d *dataInputs) {
-	C.ergo_lib_data_inputs_delete(d.p)
+func finalizeDataInputs(p C.DataInputsPtr) {
+	C.ergo_lib_data_inputs_delete(p)
 }

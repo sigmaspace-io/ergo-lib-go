@@ -24,7 +24,7 @@ type txId struct {
 }
 
 func newTxId(t *txId) TxId {
-	runtime.SetFinalizer(t, finalizeTxId)
+	runtime.AddCleanup(t, finalizeTxId, t.p)
 	return t
 }
 
@@ -72,8 +72,8 @@ func (t *txId) pointer() C.TxIdPtr {
 	return t.p
 }
 
-func finalizeTxId(t *txId) {
-	C.ergo_lib_tx_id_delete(t.p)
+func finalizeTxId(p C.TxIdPtr) {
+	C.ergo_lib_tx_id_delete(p)
 }
 
 // CommitmentHint is a family of hints which are about a correspondence between a public image of a secret image and prover's commitment
@@ -87,7 +87,7 @@ type commitmentHint struct {
 }
 
 func newCommitmentHint(c *commitmentHint) CommitmentHint {
-	runtime.SetFinalizer(c, finalizeCommitmentHint)
+	runtime.AddCleanup(c, finalizeCommitmentHint, c.p)
 	return c
 }
 
@@ -95,8 +95,8 @@ func (c *commitmentHint) pointer() C.CommitmentHintPtr {
 	return c.p
 }
 
-func finalizeCommitmentHint(c *commitmentHint) {
-	C.ergo_lib_commitment_hint_delete(c.p)
+func finalizeCommitmentHint(p C.CommitmentHintPtr) {
+	C.ergo_lib_commitment_hint_delete(p)
 }
 
 // HintsBag is a collection of CommitmentHint to be used by a prover
@@ -117,7 +117,7 @@ type hintsBag struct {
 }
 
 func newHintsBag(h *hintsBag) HintsBag {
-	runtime.SetFinalizer(h, finalizeHintsBag)
+	runtime.AddCleanup(h, finalizeHintsBag, h.p)
 	return h
 }
 
@@ -178,8 +178,8 @@ func (h *hintsBag) pointer() C.HintsBagPtr {
 	return h.p
 }
 
-func finalizeHintsBag(h *hintsBag) {
-	C.ergo_lib_hints_bag_delete(h.p)
+func finalizeHintsBag(p C.HintsBagPtr) {
+	C.ergo_lib_hints_bag_delete(p)
 }
 
 type TransactionHintsBag interface {
@@ -195,7 +195,7 @@ type transactionHintsBag struct {
 }
 
 func newTransactionHintsBag(t *transactionHintsBag) TransactionHintsBag {
-	runtime.SetFinalizer(t, finalizeTransactionHintsBag)
+	runtime.AddCleanup(t, finalizeTransactionHintsBag, t.p)
 	return t
 }
 
@@ -227,8 +227,8 @@ func (t *transactionHintsBag) pointer() C.TransactionHintsBagPtr {
 	return t.p
 }
 
-func finalizeTransactionHintsBag(t *transactionHintsBag) {
-	C.ergo_lib_transaction_hints_bag_delete(t.p)
+func finalizeTransactionHintsBag(p C.TransactionHintsBagPtr) {
+	C.ergo_lib_transaction_hints_bag_delete(p)
 }
 
 // ExtractHintsFromSignedTransaction extracts hints from signed transaction
@@ -288,7 +288,7 @@ type unsignedTransaction struct {
 }
 
 func newUnsignedTransaction(u *unsignedTransaction) UnsignedTransaction {
-	runtime.SetFinalizer(u, finalizeUnsignedTransaction)
+	runtime.AddCleanup(u, finalizeUnsignedTransaction, u.p)
 	return u
 }
 
@@ -380,8 +380,8 @@ func (u *unsignedTransaction) pointer() C.UnsignedTransactionPtr {
 	return u.p
 }
 
-func finalizeUnsignedTransaction(u *unsignedTransaction) {
-	C.ergo_lib_unsigned_tx_delete(u.p)
+func finalizeUnsignedTransaction(p C.UnsignedTransactionPtr) {
+	C.ergo_lib_unsigned_tx_delete(p)
 }
 
 // Transaction is an atomic state transition operation. It destroys Boxes from the state
@@ -417,7 +417,7 @@ type transaction struct {
 }
 
 func newTransaction(t *transaction) Transaction {
-	runtime.SetFinalizer(t, finalizeTransaction)
+	runtime.AddCleanup(t, finalizeTransaction, t.p)
 	return t
 }
 
@@ -548,6 +548,6 @@ func (t *transaction) pointer() C.TransactionPtr {
 	return t.p
 }
 
-func finalizeTransaction(t *transaction) {
-	C.ergo_lib_tx_delete(t.p)
+func finalizeTransaction(p C.TransactionPtr) {
+	C.ergo_lib_tx_delete(p)
 }

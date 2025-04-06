@@ -32,7 +32,7 @@ type merkleProof struct {
 }
 
 func newMerkleProof(m *merkleProof) MerkleProof {
-	runtime.SetFinalizer(m, finalizeMerkleProof)
+	runtime.AddCleanup(m, finalizeMerkleProof, m.p)
 	return m
 }
 
@@ -103,6 +103,6 @@ func (m *merkleProof) ValidBase16(expectedRoot string) bool {
 	return bool(res)
 }
 
-func finalizeMerkleProof(m *merkleProof) {
-	C.ergo_merkle_proof_delete(m.p)
+func finalizeMerkleProof(p C.MerkleProofPtr) {
+	C.ergo_merkle_proof_delete(p)
 }

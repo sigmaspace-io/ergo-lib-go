@@ -18,7 +18,7 @@ type preHeader struct {
 }
 
 func newPreHeader(h *preHeader) PreHeader {
-	runtime.SetFinalizer(h, finalizePreHeader)
+	runtime.AddCleanup(h, finalizePreHeader, h.p)
 	return h
 }
 
@@ -45,6 +45,6 @@ func (h *preHeader) pointer() C.PreHeaderPtr {
 	return h.p
 }
 
-func finalizePreHeader(h *preHeader) {
-	C.ergo_lib_preheader_delete(h.p)
+func finalizePreHeader(p C.PreHeaderPtr) {
+	C.ergo_lib_preheader_delete(p)
 }

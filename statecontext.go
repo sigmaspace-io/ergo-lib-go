@@ -18,7 +18,7 @@ type stateContext struct {
 }
 
 func newStateContext(s *stateContext) StateContext {
-	runtime.SetFinalizer(s, finalizeStateContext)
+	runtime.AddCleanup(s, finalizeStateContext, s.p)
 	return s
 }
 
@@ -52,6 +52,6 @@ func (s *stateContext) pointer() C.ErgoStateContextPtr {
 	return s.p
 }
 
-func finalizeStateContext(s *stateContext) {
-	C.ergo_lib_ergo_state_context_delete(s.p)
+func finalizeStateContext(p C.ErgoStateContextPtr) {
+	C.ergo_lib_ergo_state_context_delete(p)
 }

@@ -23,7 +23,7 @@ type contract struct {
 }
 
 func newContract(c *contract) Contract {
-	runtime.SetFinalizer(c, finalizeContract)
+	runtime.AddCleanup(c, finalizeContract, c.p)
 	return c
 }
 
@@ -91,6 +91,6 @@ func (c *contract) pointer() C.ContractPtr {
 	return c.p
 }
 
-func finalizeContract(c *contract) {
-	C.ergo_lib_contract_delete(c.p)
+func finalizeContract(p C.ContractPtr) {
+	C.ergo_lib_contract_delete(p)
 }
