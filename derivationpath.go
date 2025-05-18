@@ -9,27 +9,17 @@ import (
 	"unsafe"
 )
 
-type DerivationPath interface {
-	// String returns the DerivationPath formatted as string in the m/44/429/acc'/0/addr format
-	String() string
-	// Depth returns the length of the DerivationPath
-	Depth() uint32
-	// Next returns a new DerivationPath with the last element of the derivation path being increased, e.g. m/1/2 -> m/1/3
-	Next() (DerivationPath, error)
-	pointer() C.DerivationPathPtr
-}
-
-type derivationPath struct {
+type DerivationPath struct {
 	p C.DerivationPathPtr
 }
 
-func newDerivationPath(d *derivationPath) DerivationPath {
+func newDerivationPath(d *DerivationPath) *DerivationPath {
 	runtime.AddCleanup(d, finalizeDerivationPath, d.p)
 	return d
 }
 
-// NewDerivationPath creates DerivationPath from account index and address indices
-func NewDerivationPath(account uint32, addressIndices []uint32) (DerivationPath, error) {
+// NewDerivationPath creates DerivationPath from account index and Address indices
+func NewDerivationPath(account uint32, addressIndices []uint32) (*DerivationPath, error) {
 	var p C.DerivationPathPtr
 
 	errPtr := C.ergo_lib_derivation_path_new(C.uint32_t(account), (*C.uint32_t)(&addressIndices[0]), C.uintptr_t(len(addressIndices)), &p)
@@ -37,13 +27,13 @@ func NewDerivationPath(account uint32, addressIndices []uint32) (DerivationPath,
 	if err.isError() {
 		return nil, err.error()
 	}
-	d := &derivationPath{p: p}
+	d := &DerivationPath{p: p}
 	return newDerivationPath(d), nil
 }
 
 // NewDerivationPathFromString creates DerivationPath from string which
 // should be in the form of m/44/429/acc'/0/addr
-func NewDerivationPathFromString(s string) (DerivationPath, error) {
+func NewDerivationPathFromString(s string) (*DerivationPath, error) {
 	derivationPathStr := C.CString(s)
 	defer C.free(unsafe.Pointer(derivationPathStr))
 
@@ -53,11 +43,12 @@ func NewDerivationPathFromString(s string) (DerivationPath, error) {
 	if err.isError() {
 		return nil, err.error()
 	}
-	d := &derivationPath{p: p}
+	d := &DerivationPath{p: p}
 	return newDerivationPath(d), nil
 }
 
-func (d *derivationPath) String() string {
+// String returns the DerivationPath formatted as string in the m/44/429/acc'/0/addr format
+func (d *DerivationPath) String() string {
 	var derivationPathStr *C.char
 
 	C.ergo_lib_derivation_path_to_str(d.p, &derivationPathStr)
@@ -67,13 +58,15 @@ func (d *derivationPath) String() string {
 	return C.GoString(derivationPathStr)
 }
 
-func (d *derivationPath) Depth() uint32 {
+// Depth returns the length of the DerivationPath
+func (d *DerivationPath) Depth() uint32 {
 	res := C.ergo_lib_derivation_path_depth(d.p)
 	runtime.KeepAlive(d)
 	return uint32(res)
 }
 
-func (d *derivationPath) Next() (DerivationPath, error) {
+// Next returns a new DerivationPath with the last element of the derivation path being increased, e.g. m/1/2 -> m/1/3
+func (d *DerivationPath) Next() (*DerivationPath, error) {
 	var p C.DerivationPathPtr
 
 	errPtr := C.ergo_lib_derivation_path_next(d.p, &p)
@@ -83,11 +76,11 @@ func (d *derivationPath) Next() (DerivationPath, error) {
 		return nil, err.error()
 	}
 
-	dp := &derivationPath{p: p}
+	dp := &DerivationPath{p: p}
 	return newDerivationPath(dp), nil
 }
 
-func (d *derivationPath) pointer() C.DerivationPathPtr {
+func (d *DerivationPath) pointer() C.DerivationPathPtr {
 	return d.p
 }
 

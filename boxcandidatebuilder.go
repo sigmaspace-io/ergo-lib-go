@@ -10,91 +10,64 @@ import (
 )
 
 // BoxCandidateBuilder is a builder to build a BoxCandidate
-type BoxCandidateBuilder interface {
-	// SetMinBoxValuePerByte sets minimal value (per byte of the serialized box size)
-	SetMinBoxValuePerByte(minBoxValuePerByte uint32)
-	// MinBoxValuePerByte returns minimal value (per byte of the serialized box size)
-	MinBoxValuePerByte() uint32
-	// SetValue sets new box value
-	SetValue(boxValue BoxValue)
-	// Value returns box value
-	Value() BoxValue
-	// CalcBoxSizeBytes calculates serialized box size(in bytes)
-	CalcBoxSizeBytes() (uint32, error)
-	// CalcMinBoxValue calculates minimal box value for the current box serialized size(in bytes)
-	CalcMinBoxValue() (BoxValue, error)
-	// SetRegisterValue sets register with a given id (R4 - R9) to the given value
-	SetRegisterValue(registerId nonMandatoryRegisterId, constant Constant)
-	// RegisterValue returns register value for the given register id (R4 - R9), or nil if the register is empty
-	RegisterValue(registerId nonMandatoryRegisterId) (Constant, error)
-	// DeleteRegisterValue deletes register value(make register empty) for the given register id (R4 - R9)
-	DeleteRegisterValue(registerId nonMandatoryRegisterId)
-	// MintToken mints token, as defined in https://github.com/ergoplatform/eips/blob/master/eip-0004.md
-	// Parameters:
-	// token - token id(box id of the first input box in transaction) and token amount
-	// tokenName - token name (will be encoded in R4)
-	// tokenDesc - token description (will be encoded in R5)
-	// numDecimals - number of decimals (will be encoded in R6)
-	MintToken(token Token, tokenName string, tokenDesc string, numDecimals uint32)
-	// AddToken adds given token id and token amount
-	AddToken(tokenId TokenId, tokenAmount TokenAmount)
-	// Build builds the box candidate
-	Build() (BoxCandidate, error)
-}
-
-type boxCandidateBuilder struct {
+type BoxCandidateBuilder struct {
 	p C.ErgoBoxCandidateBuilderPtr
 }
 
-func newBoxCandidateBuilder(b *boxCandidateBuilder) BoxCandidateBuilder {
+func newBoxCandidateBuilder(b *BoxCandidateBuilder) *BoxCandidateBuilder {
 	runtime.AddCleanup(b, finalizeBoxCandidateBuilder, b.p)
 	return b
 }
 
-// NewBoxCandidateBuilder creates a BoxCandidateBuilder with required box parameters.
+// NewBoxCandidateBuilder creates a BoxCandidateBuilder with required Box Parameters.
 // Parameters:
-// boxValue - amount of money associated with the box
-// contract - guard Contract which should be evaluated to true in order to open/spend this box
-// creationHeight - height when a transaction containing the box is created.
-// It should not exceed the height of the block, containing the transaction with this box.
-func NewBoxCandidateBuilder(boxValue BoxValue, contract Contract, creationHeight uint32) BoxCandidateBuilder {
+// boxValue - amount of money associated with the Box
+// Contract - guard Contract which should be evaluated to true in order to open/spend this Box
+// creationHeight - height when a Transaction containing the Box is created.
+// It should not exceed the height of the block, containing the Transaction with this Box.
+func NewBoxCandidateBuilder(boxValue *BoxValue, contract *Contract, creationHeight uint32) *BoxCandidateBuilder {
 	var p C.ErgoBoxCandidateBuilderPtr
 
 	C.ergo_lib_ergo_box_candidate_builder_new(boxValue.pointer(), contract.pointer(), C.uint32_t(creationHeight), &p)
 	runtime.KeepAlive(boxValue)
 	runtime.KeepAlive(contract)
 
-	bc := &boxCandidateBuilder{p: p}
+	bc := &BoxCandidateBuilder{p: p}
 
 	return newBoxCandidateBuilder(bc)
 }
 
-func (b *boxCandidateBuilder) SetMinBoxValuePerByte(minBoxValuePerByte uint32) {
+// SetMinBoxValuePerByte sets minimal value (per byte of the serialized Box size)
+func (b *BoxCandidateBuilder) SetMinBoxValuePerByte(minBoxValuePerByte uint32) {
 	C.ergo_lib_ergo_box_candidate_builder_set_min_box_value_per_byte(b.p, C.uint32_t(minBoxValuePerByte))
 	runtime.KeepAlive(b)
 }
 
-func (b *boxCandidateBuilder) MinBoxValuePerByte() uint32 {
+// MinBoxValuePerByte returns minimal value (per byte of the serialized Box size)
+func (b *BoxCandidateBuilder) MinBoxValuePerByte() uint32 {
 	res := C.ergo_lib_ergo_box_candidate_builder_min_box_value_per_byte(b.p)
 	runtime.KeepAlive(b)
 	return uint32(res)
 }
 
-func (b *boxCandidateBuilder) SetValue(boxValue BoxValue) {
+// SetValue sets new Box value
+func (b *BoxCandidateBuilder) SetValue(boxValue *BoxValue) {
 	C.ergo_lib_ergo_box_candidate_builder_set_value(b.p, boxValue.pointer())
 	runtime.KeepAlive(b)
 	runtime.KeepAlive(boxValue)
 }
 
-func (b *boxCandidateBuilder) Value() BoxValue {
+// Value returns Box value
+func (b *BoxCandidateBuilder) Value() *BoxValue {
 	var p C.BoxValuePtr
 	C.ergo_lib_ergo_box_candidate_builder_value(b.p, &p)
 	runtime.KeepAlive(b)
-	bv := &boxValue{p: p}
+	bv := &BoxValue{p: p}
 	return newBoxValue(bv)
 }
 
-func (b *boxCandidateBuilder) CalcBoxSizeBytes() (uint32, error) {
+// CalcBoxSizeBytes calculates serialized Box size(in bytes)
+func (b *BoxCandidateBuilder) CalcBoxSizeBytes() (uint32, error) {
 	res := C.ergo_lib_ergo_box_candidate_builder_calc_box_size_bytes(b.p)
 	runtime.KeepAlive(b)
 	err := newError(res.error)
@@ -104,7 +77,8 @@ func (b *boxCandidateBuilder) CalcBoxSizeBytes() (uint32, error) {
 	return uint32(res.value), nil
 }
 
-func (b *boxCandidateBuilder) CalcMinBoxValue() (BoxValue, error) {
+// CalcMinBoxValue calculates minimal Box value for the current Box serialized size(in bytes)
+func (b *BoxCandidateBuilder) CalcMinBoxValue() (*BoxValue, error) {
 	var p C.BoxValuePtr
 	errPtr := C.ergo_lib_ergo_box_candidate_calc_min_box_value(b.p, &p)
 	runtime.KeepAlive(b)
@@ -112,17 +86,19 @@ func (b *boxCandidateBuilder) CalcMinBoxValue() (BoxValue, error) {
 	if err.isError() {
 		return nil, err.error()
 	}
-	bv := &boxValue{p: p}
+	bv := &BoxValue{p: p}
 	return newBoxValue(bv), nil
 }
 
-func (b *boxCandidateBuilder) SetRegisterValue(registerId nonMandatoryRegisterId, constant Constant) {
+// SetRegisterValue sets register with a given id (R4 - R9) to the given value
+func (b *BoxCandidateBuilder) SetRegisterValue(registerId nonMandatoryRegisterId, constant *Constant) {
 	C.ergo_lib_ergo_box_candidate_builder_set_register_value(b.p, C.uchar(registerId), constant.pointer())
 	runtime.KeepAlive(b)
 	runtime.KeepAlive(constant)
 }
 
-func (b *boxCandidateBuilder) RegisterValue(registerId nonMandatoryRegisterId) (Constant, error) {
+// RegisterValue returns register value for the given register id (R4 - R9), or nil if the register is empty
+func (b *BoxCandidateBuilder) RegisterValue(registerId nonMandatoryRegisterId) (*Constant, error) {
 	var p C.ConstantPtr
 	res := C.ergo_lib_ergo_box_candidate_builder_register_value(b.p, C.uchar(registerId), &p)
 	runtime.KeepAlive(b)
@@ -132,18 +108,25 @@ func (b *boxCandidateBuilder) RegisterValue(registerId nonMandatoryRegisterId) (
 	}
 
 	if res.is_some {
-		c := &constant{p: p}
+		c := &Constant{p: p}
 		return newConstant(c), nil
 	}
 	return nil, nil
 }
 
-func (b *boxCandidateBuilder) DeleteRegisterValue(registerId nonMandatoryRegisterId) {
+// DeleteRegisterValue deletes register value(make register empty) for the given register id (R4 - R9)
+func (b *BoxCandidateBuilder) DeleteRegisterValue(registerId nonMandatoryRegisterId) {
 	C.ergo_lib_ergo_box_candidate_builder_delete_register_value(b.p, C.uchar(registerId))
 	runtime.KeepAlive(b)
 }
 
-func (b *boxCandidateBuilder) MintToken(token Token, tokenName string, tokenDesc string, numDecimals uint32) {
+// MintToken mints Token, as defined in https://github.com/ergoplatform/eips/blob/master/eip-0004.md
+// Parameters:
+// Token - Token id(Box id of the first Input Box in Transaction) and Token amount
+// tokenName - Token name (will be encoded in R4)
+// tokenDesc - Token description (will be encoded in R5)
+// numDecimals - number of decimals (will be encoded in R6)
+func (b *BoxCandidateBuilder) MintToken(token *Token, tokenName string, tokenDesc string, numDecimals uint32) {
 	tknNameStr := C.CString(tokenName)
 	defer C.free(unsafe.Pointer(tknNameStr))
 
@@ -155,14 +138,16 @@ func (b *boxCandidateBuilder) MintToken(token Token, tokenName string, tokenDesc
 	runtime.KeepAlive(token)
 }
 
-func (b *boxCandidateBuilder) AddToken(tokenId TokenId, tokenAmount TokenAmount) {
+// AddToken adds given Token id and Token amount
+func (b *BoxCandidateBuilder) AddToken(tokenId *TokenId, tokenAmount *TokenAmount) {
 	C.ergo_lib_ergo_box_candidate_builder_add_token(b.p, tokenId.pointer(), tokenAmount.pointer())
 	runtime.KeepAlive(b)
 	runtime.KeepAlive(tokenId)
 	runtime.KeepAlive(tokenAmount)
 }
 
-func (b *boxCandidateBuilder) Build() (BoxCandidate, error) {
+// Build builds the Box candidate
+func (b *BoxCandidateBuilder) Build() (*BoxCandidate, error) {
 	var p C.ErgoBoxCandidatePtr
 
 	errPtr := C.ergo_lib_ergo_box_candidate_builder_build(b.p, &p)
@@ -172,7 +157,7 @@ func (b *boxCandidateBuilder) Build() (BoxCandidate, error) {
 		return nil, err.error()
 	}
 
-	bc := &boxCandidate{p: p}
+	bc := &BoxCandidate{p: p}
 	return newBoxCandidate(bc), nil
 }
 

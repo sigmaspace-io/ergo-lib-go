@@ -9,31 +9,25 @@ import (
 	"unsafe"
 )
 
-// ReducedTransaction represents reduced transaction, i.e. unsigned transaction where each unsigned input
+// ReducedTransaction represents reduced Transaction, i.e. unsigned Transaction where each unsigned Input
 // is augmented with ReducedInput which contains a script reduction result.
-// After an unsigned transaction is reduced it can be signed without context.
+// After an unsigned Transaction is reduced it can be signed without context.
 // Thus, it can be serialized and transferred for example to Cold Wallet and signed
 // in an environment where secrets are known.
 // see EIP-19 for more details -
 // https://github.com/ergoplatform/eips/blob/f280890a4163f2f2e988a0091c078e36912fc531/eip-0019.md
-type ReducedTransaction interface {
-	// UnsignedTransaction returns the UnsignedTransaction
-	UnsignedTransaction() UnsignedTransaction
-	pointer() C.ReducedTransactionPtr
-}
-
-type reducedTransaction struct {
+type ReducedTransaction struct {
 	p C.ReducedTransactionPtr
 }
 
-func newReducedTransaction(r *reducedTransaction) ReducedTransaction {
+func newReducedTransaction(r *ReducedTransaction) *ReducedTransaction {
 	runtime.AddCleanup(r, finalizeReducedTransaction, r.p)
 	return r
 }
 
-// NewReducedTransaction creates a ReducedTransaction i.e unsigned transaction where each unsigned input
+// NewReducedTransaction creates a ReducedTransaction i.e unsigned Transaction where each unsigned Input
 // is augmented with ReducedInput which contains a script reduction result
-func NewReducedTransaction(unsignedTx UnsignedTransaction, boxesToSpent Boxes, dataBoxes Boxes, stateContext StateContext) (ReducedTransaction, error) {
+func NewReducedTransaction(unsignedTx *UnsignedTransaction, boxesToSpent *Boxes, dataBoxes *Boxes, stateContext *StateContext) (*ReducedTransaction, error) {
 	var p C.ReducedTransactionPtr
 
 	errPtr := C.ergo_lib_reduced_tx_from_unsigned_tx(unsignedTx.pointer(), boxesToSpent.pointer(), dataBoxes.pointer(), stateContext.pointer(), &p)
@@ -47,19 +41,20 @@ func NewReducedTransaction(unsignedTx UnsignedTransaction, boxesToSpent Boxes, d
 		return nil, err.error()
 	}
 
-	r := &reducedTransaction{p: p}
+	r := &ReducedTransaction{p: p}
 	return newReducedTransaction(r), nil
 }
 
-func (r *reducedTransaction) UnsignedTransaction() UnsignedTransaction {
+// UnsignedTransaction returns the UnsignedTransaction
+func (r *ReducedTransaction) UnsignedTransaction() *UnsignedTransaction {
 	var p C.UnsignedTransactionPtr
 	C.ergo_lib_reduced_tx_unsigned_tx(r.p, &p)
 	runtime.KeepAlive(r)
-	ut := &unsignedTransaction{p: p}
+	ut := &UnsignedTransaction{p: p}
 	return newUnsignedTransaction(ut)
 }
 
-func (r *reducedTransaction) pointer() C.ReducedTransactionPtr {
+func (r *ReducedTransaction) pointer() C.ReducedTransactionPtr {
 	return r.p
 }
 
@@ -68,30 +63,25 @@ func finalizeReducedTransaction(p C.ReducedTransactionPtr) {
 }
 
 // Propositions list(public keys)
-type Propositions interface {
-	// Add adds new proposition
-	Add(bytes []byte) error
-	pointer() C.PropositionsPtr
-}
-
-type propositions struct {
+type Propositions struct {
 	p C.PropositionsPtr
 }
 
-func newPropositions(p *propositions) Propositions {
+func newPropositions(p *Propositions) *Propositions {
 	runtime.AddCleanup(p, finalizePropositions, p.p)
 	return p
 }
 
 // NewPropositions creates empty proposition holder
-func NewPropositions() Propositions {
+func NewPropositions() *Propositions {
 	var p C.PropositionsPtr
 	C.ergo_lib_propositions_new(&p)
-	prop := &propositions{p: p}
+	prop := &Propositions{p: p}
 	return newPropositions(prop)
 }
 
-func (p *propositions) Add(bytes []byte) error {
+// Add adds new proposition
+func (p *Propositions) Add(bytes []byte) error {
 	byteData := C.CBytes(bytes)
 	defer C.free(unsafe.Pointer(byteData))
 
@@ -104,7 +94,7 @@ func (p *propositions) Add(bytes []byte) error {
 	return nil
 }
 
-func (p *propositions) pointer() C.PropositionsPtr {
+func (p *Propositions) pointer() C.PropositionsPtr {
 	return p.p
 }
 

@@ -12,9 +12,9 @@ import (
 type networkPrefix uint8
 
 const (
-	// MainnetPrefix is the network prefix used in mainnet address encoding
+	// MainnetPrefix is the network prefix used in mainnet Address encoding
 	MainnetPrefix networkPrefix = 0
-	// TestnetPrefix is the network prefix used in testnet address encoding
+	// TestnetPrefix is the network prefix used in testnet Address encoding
 	TestnetPrefix = 16
 )
 
@@ -29,30 +29,17 @@ const (
 	Pay2SPrefix addressTypePrefix = 3
 )
 
-type Address interface {
-	// Base58 converts an Address to a base58 string using the provided networkPrefix.
-	Base58(prefix networkPrefix) string
-	// TypePrefix returns the addressTypePrefix for the Address.
-	// 0x01 - Pay-to-PublicKey(P2PK) address.
-	// 0x02 - Pay-to-Script-Hash(P2SH).
-	// 0x03 - Pay-to-Script(P2S).
-	TypePrefix() addressTypePrefix
-	// Tree returns the Address as Tree
-	Tree() Tree
-	pointer() C.AddressPtr
-}
-
-type address struct {
+type Address struct {
 	p C.AddressPtr
 }
 
-func newAddress(a *address) Address {
+func newAddress(a *Address) *Address {
 	runtime.AddCleanup(a, finalizeAddress, a.p)
 	return a
 }
 
 // NewAddress creates an Address from a base58 string.
-func NewAddress(s string) (Address, error) {
+func NewAddress(s string) (*Address, error) {
 	addressStr := C.CString(s)
 	defer C.free(unsafe.Pointer(addressStr))
 
@@ -65,13 +52,13 @@ func NewAddress(s string) (Address, error) {
 		return nil, err.error()
 	}
 
-	a := &address{p}
+	a := &Address{p}
 
 	return newAddress(a), nil
 }
 
 // NewAddressFromTree creates a new Address from supplied Tree
-func NewAddressFromTree(tree Tree) (Address, error) {
+func NewAddressFromTree(tree *Tree) (*Address, error) {
 	var p C.AddressPtr
 	errPtr := C.ergo_lib_address_from_ergo_tree(tree.pointer(), &p)
 	runtime.KeepAlive(tree)
@@ -79,12 +66,12 @@ func NewAddressFromTree(tree Tree) (Address, error) {
 	if err.isError() {
 		return nil, err.error()
 	}
-	a := &address{p}
+	a := &Address{p}
 	return newAddress(a), nil
 }
 
 // NewAddressFromPublicKey creates a new Address from public key bytes
-func NewAddressFromPublicKey(publicKey []byte) (Address, error) {
+func NewAddressFromPublicKey(publicKey []byte) (*Address, error) {
 	byteData := C.CBytes(publicKey)
 	defer C.free(unsafe.Pointer(byteData))
 
@@ -94,11 +81,12 @@ func NewAddressFromPublicKey(publicKey []byte) (Address, error) {
 	if err.isError() {
 		return nil, err.error()
 	}
-	a := &address{p: p}
+	a := &Address{p: p}
 	return newAddress(a), nil
 }
 
-func (a *address) Base58(prefix networkPrefix) string {
+// Base58 converts an Address to a base58 string using the provided networkPrefix.
+func (a *Address) Base58(prefix networkPrefix) string {
 	var outAddrStr *C.char
 	cPrefix := C.uchar(prefix)
 
@@ -109,21 +97,26 @@ func (a *address) Base58(prefix networkPrefix) string {
 	return C.GoString(outAddrStr)
 }
 
-func (a *address) TypePrefix() addressTypePrefix {
+// TypePrefix returns the addressTypePrefix for the Address.
+// 0x01 - Pay-to-PublicKey(P2PK) address.
+// 0x02 - Pay-to-Script-Hash(P2SH).
+// 0x03 - Pay-to-Script(P2S).
+func (a *Address) TypePrefix() addressTypePrefix {
 	prefix := C.ergo_lib_address_type_prefix(a.p)
 	runtime.KeepAlive(a)
 	return addressTypePrefix(prefix)
 }
 
-func (a *address) Tree() Tree {
+// Tree returns the Address as Tree
+func (a *Address) Tree() *Tree {
 	var p C.ErgoTreePtr
 	C.ergo_lib_address_to_ergo_tree(a.p, &p)
 	runtime.KeepAlive(a)
-	t := &tree{p: p}
+	t := &Tree{p: p}
 	return newTree(t)
 }
 
-func (a *address) pointer() C.AddressPtr {
+func (a *Address) pointer() C.AddressPtr {
 	return a.p
 }
 

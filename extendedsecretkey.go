@@ -10,34 +10,19 @@ import (
 	"unsafe"
 )
 
-type ExtendedSecretKey interface {
-	// Child derives a new ExtendedSecretKey from the provided index
-	// The index is in the form of soft or hardened indices
-	// For example: 4 or 4' respectively
-	Child(index string) (ExtendedSecretKey, error)
-	// Path returns the DerivationPath of the ExtendedSecretKey
-	Path() DerivationPath
-	// SecretKey returns the SecretKey of the ExtendedSecretKey
-	SecretKey() SecretKey
-	// ExtendedPublicKey returns the ExtendedPublicKey associated with the ExtendedSecretKey
-	ExtendedPublicKey() ExtendedPublicKey
-	// Derive derives a new ExtendedSecretKey from the supplied DerivationPath
-	Derive(derivationPath DerivationPath) (ExtendedSecretKey, error)
-}
-
-type extendedSecretKey struct {
+type ExtendedSecretKey struct {
 	p C.ExtSecretKeyPtr
 }
 
-func newExtendedSecretKey(e *extendedSecretKey) ExtendedSecretKey {
+func newExtendedSecretKey(e *ExtendedSecretKey) *ExtendedSecretKey {
 	runtime.AddCleanup(e, finalizeExtendedSecretKey, e.p)
 	return e
 }
 
-// NewExtendedSecretKey creates a new ExtendedSecretKey from secretKeyBytes, chainCode and derivationPath
+// NewExtendedSecretKey creates a new ExtendedSecretKey from secretKeyBytes, chainCode and DerivationPath
 // secretKeyBytes needs to be the length of 32 bytes
 // chainCode needs to be the length of 32 bytes
-func NewExtendedSecretKey(secretKeyBytes []byte, chainCode []byte, derivationPath DerivationPath) (ExtendedSecretKey, error) {
+func NewExtendedSecretKey(secretKeyBytes []byte, chainCode []byte, derivationPath *DerivationPath) (*ExtendedSecretKey, error) {
 	if len(secretKeyBytes) != 32 {
 		return nil, errors.New("secretKeyBytes must be 32 bytes")
 	}
@@ -59,12 +44,12 @@ func NewExtendedSecretKey(secretKeyBytes []byte, chainCode []byte, derivationPat
 		return nil, err.error()
 	}
 
-	e := &extendedSecretKey{p: p}
+	e := &ExtendedSecretKey{p: p}
 	return newExtendedSecretKey(e), nil
 }
 
 // DeriveMaster derives root ExtendedSecretKey from seed bytes
-func DeriveMaster(seed []byte) (ExtendedSecretKey, error) {
+func DeriveMaster(seed []byte) (*ExtendedSecretKey, error) {
 	seedByteData := C.CBytes(seed)
 	defer C.free(unsafe.Pointer(seedByteData))
 
@@ -74,11 +59,14 @@ func DeriveMaster(seed []byte) (ExtendedSecretKey, error) {
 	if err.isError() {
 		return nil, err.error()
 	}
-	es := &extendedSecretKey{p: p}
+	es := &ExtendedSecretKey{p: p}
 	return newExtendedSecretKey(es), nil
 }
 
-func (e *extendedSecretKey) Child(index string) (ExtendedSecretKey, error) {
+// Child derives a new ExtendedSecretKey from the provided index
+// The index is in the form of soft or hardened indices
+// For example: 4 or 4' respectively
+func (e *ExtendedSecretKey) Child(index string) (*ExtendedSecretKey, error) {
 	indexStr := C.CString(index)
 	defer C.free(unsafe.Pointer(indexStr))
 
@@ -88,35 +76,39 @@ func (e *extendedSecretKey) Child(index string) (ExtendedSecretKey, error) {
 	if err.isError() {
 		return nil, err.error()
 	}
-	es := &extendedSecretKey{p: p}
+	es := &ExtendedSecretKey{p: p}
 	return newExtendedSecretKey(es), nil
 }
 
-func (e *extendedSecretKey) Path() DerivationPath {
+// Path returns the DerivationPath of the ExtendedSecretKey
+func (e *ExtendedSecretKey) Path() *DerivationPath {
 	var p C.DerivationPathPtr
 	C.ergo_lib_ext_secret_key_path(e.p, &p)
 	runtime.KeepAlive(e)
-	d := &derivationPath{p: p}
+	d := &DerivationPath{p: p}
 	return newDerivationPath(d)
 }
 
-func (e *extendedSecretKey) SecretKey() SecretKey {
+// SecretKey returns the SecretKey of the ExtendedSecretKey
+func (e *ExtendedSecretKey) SecretKey() *SecretKey {
 	var p C.SecretKeyPtr
 	C.ergo_lib_ext_secret_key_get_secret_key(e.p, &p)
 	runtime.KeepAlive(e)
-	s := &secretKey{p: p}
+	s := &SecretKey{p: p}
 	return newSecretKey(s)
 }
 
-func (e *extendedSecretKey) ExtendedPublicKey() ExtendedPublicKey {
+// ExtendedPublicKey returns the ExtendedPublicKey associated with the ExtendedSecretKey
+func (e *ExtendedSecretKey) ExtendedPublicKey() *ExtendedPublicKey {
 	var p C.ExtPubKeyPtr
 	C.ergo_lib_ext_secret_key_public_key(e.p, &p)
 	runtime.KeepAlive(e)
-	ep := &extendedPublicKey{p: p}
+	ep := &ExtendedPublicKey{p: p}
 	return newExtendedPublicKey(ep)
 }
 
-func (e *extendedSecretKey) Derive(derivationPath DerivationPath) (ExtendedSecretKey, error) {
+// Derive derives a new ExtendedSecretKey from the supplied DerivationPath
+func (e *ExtendedSecretKey) Derive(derivationPath *DerivationPath) (*ExtendedSecretKey, error) {
 	var p C.ExtSecretKeyPtr
 	errPtr := C.ergo_lib_ext_secret_key_derive(e.p, derivationPath.pointer(), &p)
 	runtime.KeepAlive(derivationPath)
@@ -125,7 +117,7 @@ func (e *extendedSecretKey) Derive(derivationPath DerivationPath) (ExtendedSecre
 	if err.isError() {
 		return nil, err.error()
 	}
-	es := &extendedSecretKey{p: p}
+	es := &ExtendedSecretKey{p: p}
 	return newExtendedSecretKey(es), nil
 }
 

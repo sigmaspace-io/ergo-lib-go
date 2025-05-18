@@ -9,20 +9,16 @@ import (
 	"unsafe"
 )
 
-type BatchMerkleProof interface {
-	Valid(expectedRoot []byte) bool
-}
-
-type batchMerkleProof struct {
+type BatchMerkleProof struct {
 	p C.BatchMerkleProofPtr
 }
 
-func newBatchMerkleProof(b *batchMerkleProof) BatchMerkleProof {
+func newBatchMerkleProof(b *BatchMerkleProof) *BatchMerkleProof {
 	runtime.AddCleanup(b, finalizeBatchMerkleProof, b.p)
 	return b
 }
 
-func NewBatchMerkleProof(json string) (BatchMerkleProof, error) {
+func NewBatchMerkleProof(json string) (*BatchMerkleProof, error) {
 	jsonStr := C.CString(json)
 	defer C.free(unsafe.Pointer(jsonStr))
 
@@ -32,11 +28,11 @@ func NewBatchMerkleProof(json string) (BatchMerkleProof, error) {
 	if err.isError() {
 		return nil, err.error()
 	}
-	b := &batchMerkleProof{p: p}
+	b := &BatchMerkleProof{p: p}
 	return newBatchMerkleProof(b), nil
 }
 
-func (b *batchMerkleProof) Valid(expectedRoot []byte) bool {
+func (b *BatchMerkleProof) Valid(expectedRoot []byte) bool {
 	byteData := C.CBytes(expectedRoot)
 	defer C.free(unsafe.Pointer(byteData))
 	res := C.ergo_lib_batch_merkle_proof_valid(b.p, (*C.uchar)(byteData), C.uintptr_t(len(expectedRoot)))

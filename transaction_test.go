@@ -59,7 +59,7 @@ func TestTxBuilder_Build(t *testing.T) {
 	assert.Equal(t, `{"inputs":[{"boxId":"e56847ed19b3dc6b72828fcfb992fdf7310828cf291221269b7ffc72fd66706e","extension":{}}],"data_inputs":[],"outputs":[{"value":"1000000","ergoTree":"0008cd02229ac0a22560d7bdfa4eb1de64e688390e85339c08aaf018b22d5ce93593192f","assets":[],"additionalRegisters":{},"creationHeight":0},{"value":"67497900000","ergoTree":"0008cd02229ac0a22560d7bdfa4eb1de64e688390e85339c08aaf018b22d5ce93593192f","assets":[],"additionalRegisters":{},"creationHeight":0},{"value":"1100000","ergoTree":"1005040004000e36100204a00b08cd0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ea02d192a39a8cc7a701730073011001020402d19683030193a38cc7b2a57300000193c2b2a57301007473027303830108cdeeac93b1a57304","assets":[],"additionalRegisters":{},"creationHeight":0}]}`, txJson)
 }
 
-func testBlockHeadersFromJson() BlockHeaders {
+func testBlockHeadersFromJson() *BlockHeaders {
 	blockHeaderJsn := `       {
         "extensionId": "d16f25b14457186df4c5f6355579cc769261ce1aebc8209949ca6feadbac5a3f",
         "difficulty": "626412390187008",
@@ -167,7 +167,7 @@ func TestMintToken(t *testing.T) {
 	targetBalance, _ := SumOfBoxValues(outBoxValue, fee)
 	testBoxSelection, _ := testBoxSelector.Select(unspentBoxes, targetBalance, NewTokens())
 
-	// Mint token
+	// Mint Token
 	mintBox, _ := testBoxSelection.Boxes().Get(0)
 	testTokenId := NewTokenIdFromBoxId(mintBox.BoxId())
 	testTokenAmount, _ := NewTokenAmount(1)
@@ -252,14 +252,14 @@ func TestMultiSigTx(t *testing.T) {
 	bobSecret, _ := NewSecretKeyFromBytes(bobByteSecret)
 	alicePkBytes, _ := hex.DecodeString("cd03c8e1527efae4be9868cea6767157fcccac66489842738efed0a302e4f81710d0")
 
-	// Pay 2 Script address of a multi_sig contract with contract { alicePK && bobPK }
+	// Pay 2 Script Address of a multi_sig Contract with Contract { alicePK && bobPK }
 	multiSigAddress, _ := NewAddress("JryiCXrc7x5D8AhS9DYX1TDzW5C5mT6QyTMQaptF76EQkM15cetxtYKq3u6LymLZLVCyjtgbTKFcfuuX9LLi49Ec5m2p6cwsg5NyEsCQ7na83yEPN")
 	inputContract, _ := NewContractPayToAddress(multiSigAddress)
 	testTxId, _ := NewTxId("0000000000000000000000000000000000000000000000000000000000000000")
 	testInputBoxValue, _ := NewBoxValue(1000000000)
 	testInputBox, _ := NewBox(testInputBoxValue, 0, inputContract, testTxId, 0, NewTokens())
 
-	// create a transaction that spends the "simulated" box
+	// create a Transaction that spends the "simulated" Box
 	recipient, _ := NewAddress("3WvsT2Gm4EpsM9Pg18PdY6XyhNNMqXDsvJTbbf6ihLvAmSb7u5RN")
 	unspentBoxes := NewBoxes()
 	unspentBoxes.Add(testInputBox)

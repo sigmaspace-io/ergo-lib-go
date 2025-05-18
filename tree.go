@@ -12,37 +12,17 @@ import (
 )
 
 // Tree is the root of ErgoScript IR. Serialized instances of Tree are self-sufficient and can be passed around
-type Tree interface {
-	// Base16 converts the Tree to a base16 encoded string.
-	Base16() (string, error)
-	// Address converts the Tree to an Address.
-	Address() (Address, error)
-	// TemplateBytesLength determines the length of the byte array
-	TemplateBytesLength() (int, error)
-	// TemplateHash returns the hash of the template bytes as string
-	TemplateHash() (string, error)
-	// ConstantsLength returns the number of constants stored in the serialized ErgoTree or throws error if the parsing of constants failed
-	ConstantsLength() (int, error)
-	// Constant returns Constant with given index (as stored in serialized ErgoTree) if it exists or throws error if the parsing of constants failed
-	Constant(index int) (Constant, error)
-	// Constants returns all Constant within the Tree or throws error if the parsing of constants failed
-	Constants() ([]Constant, error)
-	// Equals checks if provided Tree is same
-	Equals(tree Tree) bool
-	pointer() C.ErgoTreePtr
-}
-
-type tree struct {
+type Tree struct {
 	p C.ErgoTreePtr
 }
 
-func newTree(t *tree) Tree {
+func newTree(t *Tree) *Tree {
 	runtime.AddCleanup(t, finalizeTree, t.p)
 	return t
 }
 
-// NewTree creates a new ergo tree from the supplied base16 string.
-func NewTree(s string) (Tree, error) {
+// NewTree creates a new ergo Tree from the supplied base16 string.
+func NewTree(s string) (*Tree, error) {
 	treeStr := C.CString(s)
 	defer C.free(unsafe.Pointer(treeStr))
 
@@ -55,12 +35,13 @@ func NewTree(s string) (Tree, error) {
 		return nil, err.error()
 	}
 
-	t := &tree{p}
+	t := &Tree{p}
 
 	return newTree(t), nil
 }
 
-func (t *tree) Base16() (string, error) {
+// Base16 converts the Tree to a base16 encoded string.
+func (t *Tree) Base16() (string, error) {
 	var outStr *C.char
 
 	errPtr := C.ergo_lib_ergo_tree_to_base16_bytes(t.p, &outStr)
@@ -77,7 +58,8 @@ func (t *tree) Base16() (string, error) {
 	return result, nil
 }
 
-func (t *tree) Address() (Address, error) {
+// Address converts the Tree to an Address.
+func (t *Tree) Address() (*Address, error) {
 	var p C.AddressPtr
 
 	errPtr := C.ergo_lib_address_from_ergo_tree(t.p, &p)
@@ -88,12 +70,13 @@ func (t *tree) Address() (Address, error) {
 		return nil, err.error()
 	}
 
-	a := &address{p}
+	a := &Address{p}
 
 	return newAddress(a), nil
 }
 
-func (t *tree) TemplateBytesLength() (int, error) {
+// TemplateBytesLength determines the length of the byte array
+func (t *Tree) TemplateBytesLength() (int, error) {
 	var returnNum C.ReturnNum_usize
 	returnNum = C.ergo_lib_ergo_tree_template_bytes_len(t.p)
 	runtime.KeepAlive(t)
@@ -107,7 +90,8 @@ func (t *tree) TemplateBytesLength() (int, error) {
 	return int(size), nil
 }
 
-func (t *tree) TemplateHash() (string, error) {
+// TemplateHash returns the hash of the template bytes as string
+func (t *Tree) TemplateHash() (string, error) {
 	bytesLength, byteErr := t.TemplateBytesLength()
 	if byteErr != nil {
 		return "", byteErr
@@ -130,7 +114,8 @@ func (t *tree) TemplateHash() (string, error) {
 	return hex.EncodeToString(hash[:]), nil
 }
 
-func (t *tree) ConstantsLength() (int, error) {
+// ConstantsLength returns the number of constants stored in the serialized ErgoTree or throws error if the parsing of constants failed
+func (t *Tree) ConstantsLength() (int, error) {
 	var returnNum C.ReturnNum_usize
 	returnNum = C.ergo_lib_ergo_tree_constants_len(t.p)
 	runtime.KeepAlive(t)
@@ -144,7 +129,8 @@ func (t *tree) ConstantsLength() (int, error) {
 	return int(length), nil
 }
 
-func (t *tree) Constant(index int) (Constant, error) {
+// Constant returns Constant with given index (as stored in serialized ErgoTree) if it exists or throws error if the parsing of constants failed
+func (t *Tree) Constant(index int) (*Constant, error) {
 	var constantOut C.ConstantPtr
 	var returnOption C.ReturnOption
 
@@ -155,20 +141,21 @@ func (t *tree) Constant(index int) (Constant, error) {
 	err := newError(returnOption.error)
 
 	if err.isError() {
-		return &constant{}, err.error()
+		return &Constant{}, err.error()
 	}
 
-	c := &constant{p: constantOut}
+	c := &Constant{p: constantOut}
 
 	return newConstant(c), nil
 }
 
-func (t *tree) Constants() ([]Constant, error) {
+// Constants returns all Constant within the Tree or throws error if the parsing of constants failed
+func (t *Tree) Constants() ([]*Constant, error) {
 	length, err := t.ConstantsLength()
 	if err != nil {
 		return nil, err
 	}
-	var constants []Constant
+	var constants []*Constant
 	for i := 0; i < length; i++ {
 		ergoTreeConstant, constErr := t.Constant(i)
 		if constErr != nil {
@@ -180,14 +167,15 @@ func (t *tree) Constants() ([]Constant, error) {
 	return constants, nil
 }
 
-func (t *tree) Equals(tree Tree) bool {
+// Equals checks if provided Tree is same
+func (t *Tree) Equals(tree *Tree) bool {
 	res := C.ergo_lib_ergo_tree_eq(t.p, tree.pointer())
 	runtime.KeepAlive(t)
 	runtime.KeepAlive(tree)
 	return bool(res)
 }
 
-func (t *tree) pointer() C.ErgoTreePtr {
+func (t *Tree) pointer() C.ErgoTreePtr {
 	return t.p
 }
 

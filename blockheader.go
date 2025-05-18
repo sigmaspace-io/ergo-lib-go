@@ -11,25 +11,17 @@ import (
 )
 
 // BlockHeader represents data of the block header available in Sigma proposition
-type BlockHeader interface {
-	// BlockId returns the BlockId of the BlockHeader
-	BlockId() BlockId
-	// Equals checks if provided BlockHeader is same
-	Equals(blockHeader BlockHeader) bool
-	pointer() C.BlockHeaderPtr
-}
-
-type blockHeader struct {
+type BlockHeader struct {
 	p C.BlockHeaderPtr
 }
 
-func newBlockHeader(b *blockHeader) BlockHeader {
+func newBlockHeader(b *BlockHeader) *BlockHeader {
 	runtime.AddCleanup(b, finalizeBlockHeader, b.p)
 	return b
 }
 
 // NewBlockHeader creates a new BlockHeader from block header array JSON (Node API)
-func NewBlockHeader(json string) (BlockHeader, error) {
+func NewBlockHeader(json string) (*BlockHeader, error) {
 	blockHeaderJson := C.CString(json)
 	defer C.free(unsafe.Pointer(blockHeaderJson))
 
@@ -42,30 +34,32 @@ func NewBlockHeader(json string) (BlockHeader, error) {
 		return nil, err.error()
 	}
 
-	b := &blockHeader{p: p}
+	b := &BlockHeader{p: p}
 
 	return newBlockHeader(b), nil
 }
 
-func (b *blockHeader) BlockId() BlockId {
+// BlockId returns the BlockId of the BlockHeader
+func (b *BlockHeader) BlockId() *BlockId {
 	var p C.BlockIdPtr
 
 	C.ergo_lib_block_header_id(b.p, &p)
 	runtime.KeepAlive(b)
 
-	bi := &blockId{p: p}
+	bi := &BlockId{p: p}
 
 	return newBlockId(bi)
 }
 
-func (b *blockHeader) Equals(blockHeader BlockHeader) bool {
+// Equals checks if provided BlockHeader is same
+func (b *BlockHeader) Equals(blockHeader *BlockHeader) bool {
 	res := C.ergo_lib_block_header_eq(b.p, blockHeader.pointer())
 	runtime.KeepAlive(b)
 	runtime.KeepAlive(blockHeader)
 	return bool(res)
 }
 
-func (b *blockHeader) pointer() C.BlockHeaderPtr {
+func (b *BlockHeader) pointer() C.BlockHeaderPtr {
 	return b.p
 }
 
@@ -74,23 +68,17 @@ func finalizeBlockHeader(p C.BlockHeaderPtr) {
 }
 
 // BlockId represents the id of a BlockHeader
-type BlockId interface {
-	// Equals checks if provided BlockId is same
-	Equals(blockId BlockId) bool
-	pointer() C.BlockIdPtr
-}
-
-type blockId struct {
+type BlockId struct {
 	p C.BlockIdPtr
 }
 
-func newBlockId(b *blockId) BlockId {
+func newBlockId(b *BlockId) *BlockId {
 	runtime.AddCleanup(b, finalizeBlockId, b.p)
 	return b
 }
 
 // NewBlockId creates a new BlockId from hex-encoded string
-func NewBlockId(s string) (BlockId, error) {
+func NewBlockId(s string) (*BlockId, error) {
 	blockIdStr := C.CString(s)
 	defer C.free(unsafe.Pointer(blockIdStr))
 
@@ -103,19 +91,20 @@ func NewBlockId(s string) (BlockId, error) {
 		return nil, err.error()
 	}
 
-	b := &blockId{p: p}
+	b := &BlockId{p: p}
 
 	return newBlockId(b), nil
 }
 
-func (b *blockId) Equals(blockId BlockId) bool {
+// Equals checks if provided BlockId is same
+func (b *BlockId) Equals(blockId *BlockId) bool {
 	res := C.ergo_lib_block_id_eq(b.p, blockId.pointer())
 	runtime.KeepAlive(b)
 	runtime.KeepAlive(blockId)
 	return bool(res)
 }
 
-func (b *blockId) pointer() C.BlockIdPtr {
+func (b *BlockId) pointer() C.BlockIdPtr {
 	return b.p
 }
 
@@ -124,43 +113,33 @@ func finalizeBlockId(p C.BlockIdPtr) {
 }
 
 // BlockHeaders an ordered collection of BlockHeader
-type BlockHeaders interface {
-	// Len returns the length of the collection
-	Len() int
-	// Get returns the BlockHeader at the provided index if it exists
-	Get(index int) (BlockHeader, error)
-	// Add adds provided BlockHeader to the end of the collection
-	Add(blockHeader BlockHeader)
-	// All returns an iterator over all BlockHeader inside the collection
-	All() iter.Seq2[int, BlockHeader]
-	pointer() C.BlockHeadersPtr
-}
-
-type blockHeaders struct {
+type BlockHeaders struct {
 	p C.BlockHeadersPtr
 }
 
-func newBlockHeaders(b *blockHeaders) BlockHeaders {
+func newBlockHeaders(b *BlockHeaders) *BlockHeaders {
 	runtime.AddCleanup(b, finalizeBlockHeaders, b.p)
 	return b
 }
 
 // NewBlockHeaders creates an empty BlockHeaders collection
-func NewBlockHeaders() BlockHeaders {
+func NewBlockHeaders() *BlockHeaders {
 	var p C.BlockHeadersPtr
 	C.ergo_lib_block_headers_new(&p)
-	b := &blockHeaders{p: p}
+	b := &BlockHeaders{p: p}
 
 	return newBlockHeaders(b)
 }
 
-func (b *blockHeaders) Len() int {
+// Len returns the length of the collection
+func (b *BlockHeaders) Len() int {
 	res := C.ergo_lib_block_headers_len(b.p)
 	runtime.KeepAlive(b)
 	return int(res)
 }
 
-func (b *blockHeaders) Get(index int) (BlockHeader, error) {
+// Get returns the BlockHeader at the provided index if it exists
+func (b *BlockHeaders) Get(index int) (*BlockHeader, error) {
 	var p C.BlockHeaderPtr
 
 	res := C.ergo_lib_block_headers_get(b.p, C.uintptr_t(index), &p)
@@ -171,21 +150,23 @@ func (b *blockHeaders) Get(index int) (BlockHeader, error) {
 	}
 
 	if res.is_some {
-		bh := &blockHeader{p: p}
+		bh := &BlockHeader{p: p}
 		return newBlockHeader(bh), nil
 	}
 
 	return nil, nil
 }
 
-func (b *blockHeaders) Add(blockHeader BlockHeader) {
+// Add adds provided BlockHeader to the end of the collection
+func (b *BlockHeaders) Add(blockHeader *BlockHeader) {
 	C.ergo_lib_block_headers_add(blockHeader.pointer(), b.p)
 	runtime.KeepAlive(b)
 	runtime.KeepAlive(blockHeader)
 }
 
-func (b *blockHeaders) All() iter.Seq2[int, BlockHeader] {
-	return func(yield func(int, BlockHeader) bool) {
+// All returns an iterator over all BlockHeader inside the collection
+func (b *BlockHeaders) All() iter.Seq2[int, *BlockHeader] {
+	return func(yield func(int, *BlockHeader) bool) {
 		for i := 0; i < b.Len(); i++ {
 			tk, err := b.Get(i)
 			if err != nil {
@@ -199,7 +180,7 @@ func (b *blockHeaders) All() iter.Seq2[int, BlockHeader] {
 	}
 }
 
-func (b *blockHeaders) pointer() C.BlockHeadersPtr {
+func (b *BlockHeaders) pointer() C.BlockHeadersPtr {
 	return b.p
 }
 
@@ -208,43 +189,34 @@ func finalizeBlockHeaders(p C.BlockHeadersPtr) {
 }
 
 // BlockIds an ordered collection of BlockId
-type BlockIds interface {
-	// Len returns the length of the collection
-	Len() int
-	// Get returns the BlockId at the provided index if it exists
-	Get(index int) (BlockId, error)
-	// Add adds provided BlockId to the end of the collection
-	Add(blockId BlockId)
-	// All returns an iterator over all BlockId inside the collection
-	All() iter.Seq2[int, BlockId]
-}
-
-type blockIds struct {
+type BlockIds struct {
 	p C.BlockIdsPtr
 }
 
-func newBlockIds(b *blockIds) BlockIds {
+func newBlockIds(b *BlockIds) *BlockIds {
 	runtime.AddCleanup(b, finalizeBlockIds, b.p)
 	return b
 }
 
 // NewBlockIds creates an empty BlockIds collection
-func NewBlockIds() BlockIds {
+func NewBlockIds() *BlockIds {
 	var p C.BlockIdsPtr
 	C.ergo_lib_block_ids_new(&p)
 
-	b := &blockIds{p: p}
+	b := &BlockIds{p: p}
 
 	return newBlockIds(b)
 }
 
-func (b *blockIds) Len() int {
+// Len returns the length of the collection
+func (b *BlockIds) Len() int {
 	res := C.ergo_lib_block_ids_len(b.p)
 	runtime.KeepAlive(b)
 	return int(res)
 }
 
-func (b *blockIds) Get(index int) (BlockId, error) {
+// Get returns the BlockId at the provided index if it exists
+func (b *BlockIds) Get(index int) (*BlockId, error) {
 	var p C.BlockIdPtr
 
 	res := C.ergo_lib_block_ids_get(b.p, C.uintptr_t(index), &p)
@@ -255,21 +227,23 @@ func (b *blockIds) Get(index int) (BlockId, error) {
 	}
 
 	if res.is_some {
-		bi := &blockId{p: p}
+		bi := &BlockId{p: p}
 		return newBlockId(bi), nil
 	}
 
 	return nil, nil
 }
 
-func (b *blockIds) Add(blockId BlockId) {
+// Add adds provided BlockId to the end of the collection
+func (b *BlockIds) Add(blockId *BlockId) {
 	C.ergo_lib_block_ids_add(blockId.pointer(), b.p)
 	runtime.KeepAlive(b)
 	runtime.KeepAlive(blockId)
 }
 
-func (b *blockIds) All() iter.Seq2[int, BlockId] {
-	return func(yield func(int, BlockId) bool) {
+// All returns an iterator over all BlockId inside the collection
+func (b *BlockIds) All() iter.Seq2[int, *BlockId] {
+	return func(yield func(int, *BlockId) bool) {
 		for i := 0; i < b.Len(); i++ {
 			tk, err := b.Get(i)
 			if err != nil {

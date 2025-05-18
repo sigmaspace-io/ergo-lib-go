@@ -9,40 +9,35 @@ import (
 	"runtime"
 )
 
-// DataInput represent inputs that are used to enrich script context, but won't be spent by the transaction
-type DataInput interface {
-	// BoxId returns the BoxId of the DataInput
-	BoxId() BoxId
-	pointer() C.DataInputPtr
-}
-
-type dataInput struct {
+// DataInput represent Inputs that are used to enrich script context, but won't be spent by the Transaction
+type DataInput struct {
 	p C.DataInputPtr
 }
 
-func newDataInput(d *dataInput) DataInput {
+func newDataInput(d *DataInput) *DataInput {
 	runtime.AddCleanup(d, finalizeDataInput, d.p)
 	return d
 }
 
 // NewDataInput create DataInput from BoxId
-func NewDataInput(boxId BoxId) DataInput {
+func NewDataInput(boxId *BoxId) *DataInput {
 	var p C.DataInputPtr
 	C.ergo_lib_data_input_new(boxId.pointer(), &p)
 	runtime.KeepAlive(boxId)
-	d := &dataInput{p: p}
+	d := &DataInput{p: p}
 	return newDataInput(d)
 }
 
-func (d *dataInput) BoxId() BoxId {
+// BoxId returns the BoxId of the DataInput
+func (d *DataInput) BoxId() *BoxId {
 	var p C.BoxIdPtr
 	C.ergo_lib_data_input_box_id(d.p, &p)
 	runtime.KeepAlive(d)
-	bi := &boxId{p: p}
+	bi := &BoxId{p: p}
 	return newBoxId(bi)
 }
 
-func (d *dataInput) pointer() C.DataInputPtr {
+func (d *DataInput) pointer() C.DataInputPtr {
 	return d.p
 }
 
@@ -51,42 +46,32 @@ func finalizeDataInput(p C.DataInputPtr) {
 }
 
 // DataInputs an ordered collection if DataInput
-type DataInputs interface {
-	// Len returns the length of the collection
-	Len() int
-	// Get returns the Input at the provided index if it exists
-	Get(index int) (DataInput, error)
-	// Add adds provided DataInput to the end of the collection
-	Add(dataInput DataInput)
-	// All returns an iterator over all DataInput inside the collection
-	All() iter.Seq2[int, DataInput]
-	pointer() C.DataInputsPtr
-}
-
-type dataInputs struct {
+type DataInputs struct {
 	p C.DataInputsPtr
 }
 
-func newDataInputs(d *dataInputs) DataInputs {
+func newDataInputs(d *DataInputs) *DataInputs {
 	runtime.AddCleanup(d, finalizeDataInputs, d.p)
 	return d
 }
 
 // NewDataInputs creates an empty DataInputs collection
-func NewDataInputs() DataInputs {
+func NewDataInputs() *DataInputs {
 	var p C.DataInputsPtr
 	C.ergo_lib_data_inputs_new(&p)
-	d := &dataInputs{p: p}
+	d := &DataInputs{p: p}
 	return newDataInputs(d)
 }
 
-func (d *dataInputs) Len() int {
+// Len returns the length of the collection
+func (d *DataInputs) Len() int {
 	res := C.ergo_lib_data_inputs_len(d.p)
 	runtime.KeepAlive(d)
 	return int(res)
 }
 
-func (d *dataInputs) Get(index int) (DataInput, error) {
+// Get returns the Input at the provided index if it exists
+func (d *DataInputs) Get(index int) (*DataInput, error) {
 	var p C.DataInputPtr
 
 	res := C.ergo_lib_data_inputs_get(d.p, C.uintptr_t(index), &p)
@@ -97,21 +82,23 @@ func (d *dataInputs) Get(index int) (DataInput, error) {
 	}
 
 	if res.is_some {
-		di := &dataInput{p: p}
+		di := &DataInput{p: p}
 		return newDataInput(di), nil
 	}
 
 	return nil, nil
 }
 
-func (d *dataInputs) Add(dataInput DataInput) {
+// Add adds provided DataInput to the end of the collection
+func (d *DataInputs) Add(dataInput *DataInput) {
 	C.ergo_lib_data_inputs_add(dataInput.pointer(), d.p)
 	runtime.KeepAlive(d)
 	runtime.KeepAlive(dataInput)
 }
 
-func (d *dataInputs) All() iter.Seq2[int, DataInput] {
-	return func(yield func(int, DataInput) bool) {
+// All returns an iterator over all DataInput inside the collection
+func (d *DataInputs) All() iter.Seq2[int, *DataInput] {
+	return func(yield func(int, *DataInput) bool) {
 		for i := 0; i < d.Len(); i++ {
 			tk, err := d.Get(i)
 			if err != nil {
@@ -125,7 +112,7 @@ func (d *dataInputs) All() iter.Seq2[int, DataInput] {
 	}
 }
 
-func (d *dataInputs) pointer() C.DataInputsPtr {
+func (d *DataInputs) pointer() C.DataInputsPtr {
 	return d.p
 }
 

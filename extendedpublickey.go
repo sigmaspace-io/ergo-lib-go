@@ -10,29 +10,19 @@ import (
 	"unsafe"
 )
 
-type ExtendedPublicKey interface {
-	// Child derives a new ExtendedPublicKey from the provided index
-	Child(childIndex uint32) (ExtendedPublicKey, error)
-	// Derive derives a new ExtendedPublicKey from the supplied DerivationPath
-	Derive(derivationPath DerivationPath) (ExtendedPublicKey, error)
-	// Address returns the Address associated with the ExtendedPublicKey
-	Address() Address
-	pointer() C.ExtPubKeyPtr
-}
-
-type extendedPublicKey struct {
+type ExtendedPublicKey struct {
 	p C.ExtPubKeyPtr
 }
 
-func newExtendedPublicKey(e *extendedPublicKey) ExtendedPublicKey {
+func newExtendedPublicKey(e *ExtendedPublicKey) *ExtendedPublicKey {
 	runtime.AddCleanup(e, finalizeExtendedPublicKey, e.p)
 	return e
 }
 
-// NewExtendedPublicKey creates a new ExtendedPublicKey from publicKeyBytes, chainCode and derivationPath
+// NewExtendedPublicKey creates a new ExtendedPublicKey from publicKeyBytes, chainCode and DerivationPath
 // publicKeyBytes needs to be the length of 33 bytes
 // chainCode needs to be the length of 32 bytes
-func NewExtendedPublicKey(publicKeyBytes []byte, chainCode []byte, derivationPath DerivationPath) (ExtendedPublicKey, error) {
+func NewExtendedPublicKey(publicKeyBytes []byte, chainCode []byte, derivationPath *DerivationPath) (*ExtendedPublicKey, error) {
 	if len(publicKeyBytes) != 33 {
 		return nil, errors.New("secretKeyBytes must be 32 bytes")
 	}
@@ -54,11 +44,12 @@ func NewExtendedPublicKey(publicKeyBytes []byte, chainCode []byte, derivationPat
 		return nil, err.error()
 	}
 
-	e := &extendedPublicKey{p: p}
+	e := &ExtendedPublicKey{p: p}
 	return newExtendedPublicKey(e), nil
 }
 
-func (e *extendedPublicKey) Child(childIndex uint32) (ExtendedPublicKey, error) {
+// Child derives a new ExtendedPublicKey from the provided index
+func (e *ExtendedPublicKey) Child(childIndex uint32) (*ExtendedPublicKey, error) {
 	var p C.ExtPubKeyPtr
 	errPtr := C.ergo_lib_ext_pub_key_child(e.p, C.uint32_t(childIndex), &p)
 	runtime.KeepAlive(e)
@@ -66,10 +57,11 @@ func (e *extendedPublicKey) Child(childIndex uint32) (ExtendedPublicKey, error) 
 	if err.isError() {
 		return nil, err.error()
 	}
-	return newExtendedPublicKey(e), nil
+	return newExtendedPublicKey(&ExtendedPublicKey{p}), nil
 }
 
-func (e *extendedPublicKey) Derive(derivationPath DerivationPath) (ExtendedPublicKey, error) {
+// Derive derives a new ExtendedPublicKey from the supplied DerivationPath
+func (e *ExtendedPublicKey) Derive(derivationPath *DerivationPath) (*ExtendedPublicKey, error) {
 	var p C.ExtPubKeyPtr
 	errPtr := C.ergo_lib_ext_pub_key_derive(e.p, derivationPath.pointer(), &p)
 	runtime.KeepAlive(e)
@@ -78,18 +70,19 @@ func (e *extendedPublicKey) Derive(derivationPath DerivationPath) (ExtendedPubli
 	if err.isError() {
 		return nil, err.error()
 	}
-	return newExtendedPublicKey(e), nil
+	return newExtendedPublicKey(&ExtendedPublicKey{p}), nil
 }
 
-func (e *extendedPublicKey) Address() Address {
+// Address returns the Address associated with the ExtendedPublicKey
+func (e *ExtendedPublicKey) Address() *Address {
 	var p C.AddressPtr
 	C.ergo_lib_ext_pub_key_address(e.p, &p)
 	runtime.KeepAlive(e)
-	a := &address{p: p}
+	a := &Address{p: p}
 	return newAddress(a)
 }
 
-func (e *extendedPublicKey) pointer() C.ExtPubKeyPtr {
+func (e *ExtendedPublicKey) pointer() C.ExtPubKeyPtr {
 	return e.p
 }
 

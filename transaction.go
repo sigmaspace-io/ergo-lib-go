@@ -10,26 +10,18 @@ import (
 	"unsafe"
 )
 
-// TxId represents transaction id
-type TxId interface {
-	// String returns TxId as string
-	String() (string, error)
-	// Equals checks if provided TxId is same
-	Equals(txId TxId) bool
-	pointer() C.TxIdPtr
-}
-
-type txId struct {
+// TxId represents Transaction id
+type TxId struct {
 	p C.TxIdPtr
 }
 
-func newTxId(t *txId) TxId {
+func newTxId(t *TxId) *TxId {
 	runtime.AddCleanup(t, finalizeTxId, t.p)
 	return t
 }
 
 // NewTxId creates TxId from hex-encoded string
-func NewTxId(s string) (TxId, error) {
+func NewTxId(s string) (*TxId, error) {
 	txIdStr := C.CString(s)
 	defer C.free(unsafe.Pointer(txIdStr))
 
@@ -42,12 +34,13 @@ func NewTxId(s string) (TxId, error) {
 		return nil, err.error()
 	}
 
-	t := &txId{p}
+	t := &TxId{p}
 
 	return newTxId(t), nil
 }
 
-func (t *txId) String() (string, error) {
+// String returns TxId as string
+func (t *TxId) String() (string, error) {
 	var outTxIdStr *C.char
 
 	errPtr := C.ergo_lib_tx_id_to_str(t.p, &outTxIdStr)
@@ -61,14 +54,15 @@ func (t *txId) String() (string, error) {
 	return C.GoString(outTxIdStr), nil
 }
 
-func (t *txId) Equals(txId TxId) bool {
+// Equals checks if provided TxId is same
+func (t *TxId) Equals(txId *TxId) bool {
 	res := C.ergo_lib_tx_id_eq(t.p, txId.pointer())
 	runtime.KeepAlive(t)
 	runtime.KeepAlive(txId)
 	return bool(res)
 }
 
-func (t *txId) pointer() C.TxIdPtr {
+func (t *TxId) pointer() C.TxIdPtr {
 	return t.p
 }
 
@@ -78,20 +72,16 @@ func finalizeTxId(p C.TxIdPtr) {
 
 // CommitmentHint is a family of hints which are about a correspondence between a public image of a secret image and prover's commitment
 // to randomness ("a" in a sigma protocol).
-type CommitmentHint interface {
-	pointer() C.CommitmentHintPtr
-}
-
-type commitmentHint struct {
+type CommitmentHint struct {
 	p C.CommitmentHintPtr
 }
 
-func newCommitmentHint(c *commitmentHint) CommitmentHint {
+func newCommitmentHint(c *CommitmentHint) *CommitmentHint {
 	runtime.AddCleanup(c, finalizeCommitmentHint, c.p)
 	return c
 }
 
-func (c *commitmentHint) pointer() C.CommitmentHintPtr {
+func (c *CommitmentHint) pointer() C.CommitmentHintPtr {
 	return c.p
 }
 
@@ -100,48 +90,39 @@ func finalizeCommitmentHint(p C.CommitmentHintPtr) {
 }
 
 // HintsBag is a collection of CommitmentHint to be used by a prover
-type HintsBag interface {
-	// Add adds CommitmentHint to the bag
-	Add(hint CommitmentHint)
-	// Len returns the length of the HintsBag
-	Len() int
-	// Get returns the CommitmentHint at the provided index if it exists
-	Get(index int) (CommitmentHint, error)
-	// All returns an iterator over all CommitmentHint inside the collection
-	All() iter.Seq2[int, CommitmentHint]
-	pointer() C.HintsBagPtr
-}
-
-type hintsBag struct {
+type HintsBag struct {
 	p C.HintsBagPtr
 }
 
-func newHintsBag(h *hintsBag) HintsBag {
+func newHintsBag(h *HintsBag) *HintsBag {
 	runtime.AddCleanup(h, finalizeHintsBag, h.p)
 	return h
 }
 
 // NewHintsBag creates an empty HintsBag
-func NewHintsBag() HintsBag {
+func NewHintsBag() *HintsBag {
 	var p C.HintsBagPtr
 	C.ergo_lib_hints_bag_empty(&p)
 
-	h := &hintsBag{p: p}
+	h := &HintsBag{p: p}
 	return newHintsBag(h)
 }
 
-func (h *hintsBag) Add(hint CommitmentHint) {
+// Add adds CommitmentHint to the bag
+func (h *HintsBag) Add(hint *CommitmentHint) {
 	C.ergo_lib_hints_bag_add_commitment(h.p, hint.pointer())
 	runtime.KeepAlive(h)
 	runtime.KeepAlive(hint)
 }
 
-func (h *hintsBag) Len() int {
+// Len returns the length of the HintsBag
+func (h *HintsBag) Len() int {
 	res := C.ergo_lib_hints_bag_len(h.p)
 	return int(res)
 }
 
-func (h *hintsBag) Get(index int) (CommitmentHint, error) {
+// Get returns the CommitmentHint at the provided index if it exists
+func (h *HintsBag) Get(index int) (*CommitmentHint, error) {
 	var p C.CommitmentHintPtr
 
 	res := C.ergo_lib_hints_bag_get(h.p, C.uintptr_t(index), &p)
@@ -152,15 +133,16 @@ func (h *hintsBag) Get(index int) (CommitmentHint, error) {
 	}
 
 	if res.is_some {
-		c := &commitmentHint{p: p}
+		c := &CommitmentHint{p: p}
 		return newCommitmentHint(c), nil
 	}
 
 	return nil, nil
 }
 
-func (h *hintsBag) All() iter.Seq2[int, CommitmentHint] {
-	return func(yield func(int, CommitmentHint) bool) {
+// All returns an iterator over all CommitmentHint inside the collection
+func (h *HintsBag) All() iter.Seq2[int, *CommitmentHint] {
+	return func(yield func(int, *CommitmentHint) bool) {
 		for i := 0; i < h.Len(); i++ {
 			tk, err := h.Get(i)
 			if err != nil {
@@ -174,7 +156,7 @@ func (h *hintsBag) All() iter.Seq2[int, CommitmentHint] {
 	}
 }
 
-func (h *hintsBag) pointer() C.HintsBagPtr {
+func (h *HintsBag) pointer() C.HintsBagPtr {
 	return h.p
 }
 
@@ -182,48 +164,42 @@ func finalizeHintsBag(p C.HintsBagPtr) {
 	C.ergo_lib_hints_bag_delete(p)
 }
 
-type TransactionHintsBag interface {
-	// AddHintsForInput adds hints for input
-	AddHintsForInput(index uint32, hintsBag HintsBag)
-	// AllHintsForInput gets HintsBag corresponding to input index
-	AllHintsForInput(index uint32) HintsBag
-	pointer() C.TransactionHintsBagPtr
-}
-
-type transactionHintsBag struct {
+type TransactionHintsBag struct {
 	p C.TransactionHintsBagPtr
 }
 
-func newTransactionHintsBag(t *transactionHintsBag) TransactionHintsBag {
+func newTransactionHintsBag(t *TransactionHintsBag) *TransactionHintsBag {
 	runtime.AddCleanup(t, finalizeTransactionHintsBag, t.p)
 	return t
 }
 
 // NewTransactionHintsBag creates empty TransactionHintsBag
-func NewTransactionHintsBag() TransactionHintsBag {
+func NewTransactionHintsBag() *TransactionHintsBag {
 	var p C.TransactionHintsBagPtr
 	C.ergo_lib_transaction_hints_bag_empty(&p)
 
-	t := &transactionHintsBag{p: p}
+	t := &TransactionHintsBag{p: p}
 
 	return newTransactionHintsBag(t)
 }
 
-func (t *transactionHintsBag) AddHintsForInput(index uint32, hintsBag HintsBag) {
+// AddHintsForInput adds hints for Input
+func (t *TransactionHintsBag) AddHintsForInput(index uint32, hintsBag *HintsBag) {
 	C.ergo_lib_transaction_hints_bag_add_hints_for_input(t.p, C.uintptr_t(index), hintsBag.pointer())
 	runtime.KeepAlive(t)
 	runtime.KeepAlive(hintsBag)
 }
 
-func (t *transactionHintsBag) AllHintsForInput(index uint32) HintsBag {
+// AllHintsForInput gets HintsBag corresponding to Input index
+func (t *TransactionHintsBag) AllHintsForInput(index uint32) *HintsBag {
 	var p C.HintsBagPtr
 	C.ergo_lib_transaction_hints_bag_all_hints_for_input(t.p, C.uintptr_t(index), &p)
 	runtime.KeepAlive(t)
-	h := &hintsBag{p: p}
+	h := &HintsBag{p: p}
 	return newHintsBag(h)
 }
 
-func (t *transactionHintsBag) pointer() C.TransactionHintsBagPtr {
+func (t *TransactionHintsBag) pointer() C.TransactionHintsBagPtr {
 	return t.p
 }
 
@@ -231,14 +207,14 @@ func finalizeTransactionHintsBag(p C.TransactionHintsBagPtr) {
 	C.ergo_lib_transaction_hints_bag_delete(p)
 }
 
-// ExtractHintsFromSignedTransaction extracts hints from signed transaction
+// ExtractHintsFromSignedTransaction extracts hints from signed Transaction
 func ExtractHintsFromSignedTransaction(
-	transaction Transaction,
-	stateContext StateContext,
-	boxesToSpend Boxes,
-	dataBoxes Boxes,
-	realPropositions Propositions,
-	simulatedPropositions Propositions) (TransactionHintsBag, error) {
+	transaction *Transaction,
+	stateContext *StateContext,
+	boxesToSpend *Boxes,
+	dataBoxes *Boxes,
+	realPropositions *Propositions,
+	simulatedPropositions *Propositions) (*TransactionHintsBag, error) {
 	var p C.TransactionHintsBagPtr
 
 	errPtr := C.ergo_lib_transaction_extract_hints(
@@ -261,39 +237,23 @@ func ExtractHintsFromSignedTransaction(
 		return nil, err.error()
 	}
 
-	th := &transactionHintsBag{p: p}
+	th := &TransactionHintsBag{p: p}
 
 	return newTransactionHintsBag(th), nil
 }
 
-// UnsignedTransaction represents an unsigned transaction (inputs without proofs)
-type UnsignedTransaction interface {
-	// TxId returns TxId for this UnsignedTransaction
-	TxId() TxId
-	// UnsignedInputs returns UnsignedInputs for this UnsignedTransaction
-	UnsignedInputs() UnsignedInputs
-	// DataInputs returns DataInputs for this UnsignedTransaction
-	DataInputs() DataInputs
-	// OutputCandidates returns BoxCandidates for this UnsignedTransaction
-	OutputCandidates() BoxCandidates
-	// Json returns json representation of UnsignedTransaction as string (compatible with Ergo Node/Explorer API, numbers are encoded as numbers)
-	Json() (string, error)
-	// JsonEIP12 returns json representation of UnsignedTransaction as string according to EIP-12 https://github.com/ergoplatform/eips/pull/23
-	JsonEIP12() (string, error)
-	pointer() C.UnsignedTransactionPtr
-}
-
-type unsignedTransaction struct {
+// UnsignedTransaction represents an unsigned Transaction (inputs without proofs)
+type UnsignedTransaction struct {
 	p C.UnsignedTransactionPtr
 }
 
-func newUnsignedTransaction(u *unsignedTransaction) UnsignedTransaction {
+func newUnsignedTransaction(u *UnsignedTransaction) *UnsignedTransaction {
 	runtime.AddCleanup(u, finalizeUnsignedTransaction, u.p)
 	return u
 }
 
-// NewUnsignedTransactionFromJson parse UnsignedTransaction from JSON. Supports Ergo Node/Explorer API and box values and token amount encoded as strings.
-func NewUnsignedTransactionFromJson(json string) (UnsignedTransaction, error) {
+// NewUnsignedTransactionFromJson parse UnsignedTransaction from JSON. Supports Ergo Node/Explorer API and Box values and Token amount encoded as strings.
+func NewUnsignedTransactionFromJson(json string) (*UnsignedTransaction, error) {
 	unsTxJsonStr := C.CString(json)
 	defer C.free(unsafe.Pointer(unsTxJsonStr))
 
@@ -306,43 +266,48 @@ func NewUnsignedTransactionFromJson(json string) (UnsignedTransaction, error) {
 		return nil, err.error()
 	}
 
-	ut := &unsignedTransaction{p: p}
+	ut := &UnsignedTransaction{p: p}
 	return newUnsignedTransaction(ut), nil
 }
 
-func (u *unsignedTransaction) TxId() TxId {
+// TxId returns TxId for this UnsignedTransaction
+func (u *UnsignedTransaction) TxId() *TxId {
 	var p C.TxIdPtr
 	C.ergo_lib_unsigned_tx_id(u.p, &p)
 	runtime.KeepAlive(u)
-	ti := &txId{p: p}
+	ti := &TxId{p: p}
 	return newTxId(ti)
 }
 
-func (u *unsignedTransaction) UnsignedInputs() UnsignedInputs {
+// UnsignedInputs returns UnsignedInputs for this UnsignedTransaction
+func (u *UnsignedTransaction) UnsignedInputs() *UnsignedInputs {
 	var p C.UnsignedInputsPtr
 	C.ergo_lib_unsigned_tx_inputs(u.p, &p)
 	runtime.KeepAlive(u)
-	ui := &unsignedInputs{p: p}
+	ui := &UnsignedInputs{p: p}
 	return newUnsignedInputs(ui)
 }
 
-func (u *unsignedTransaction) DataInputs() DataInputs {
+// DataInputs returns DataInputs for this UnsignedTransaction
+func (u *UnsignedTransaction) DataInputs() *DataInputs {
 	var p C.DataInputsPtr
 	C.ergo_lib_unsigned_tx_data_inputs(u.p, &p)
 	runtime.KeepAlive(u)
-	di := &dataInputs{p: p}
+	di := &DataInputs{p: p}
 	return newDataInputs(di)
 }
 
-func (u *unsignedTransaction) OutputCandidates() BoxCandidates {
+// OutputCandidates returns BoxCandidates for this UnsignedTransaction
+func (u *UnsignedTransaction) OutputCandidates() *BoxCandidates {
 	var p C.ErgoBoxCandidatesPtr
 	C.ergo_lib_unsigned_tx_output_candidates(u.p, &p)
 	runtime.KeepAlive(u)
-	bc := &boxCandidates{p: p}
+	bc := &BoxCandidates{p: p}
 	return newBoxCandidates(bc)
 }
 
-func (u *unsignedTransaction) Json() (string, error) {
+// Json returns json representation of UnsignedTransaction as string (compatible with Ergo Node/Explorer API, numbers are encoded as numbers)
+func (u *UnsignedTransaction) Json() (string, error) {
 	var outStr *C.char
 
 	errPtr := C.ergo_lib_unsigned_tx_to_json(u.p, &outStr)
@@ -359,7 +324,8 @@ func (u *unsignedTransaction) Json() (string, error) {
 	return result, nil
 }
 
-func (u *unsignedTransaction) JsonEIP12() (string, error) {
+// JsonEIP12 returns json representation of UnsignedTransaction as string according to EIP-12 https://github.com/ergoplatform/eips/pull/23
+func (u *UnsignedTransaction) JsonEIP12() (string, error) {
 	var outStr *C.char
 
 	errPtr := C.ergo_lib_unsigned_tx_to_json_eip12(u.p, &outStr)
@@ -376,7 +342,7 @@ func (u *unsignedTransaction) JsonEIP12() (string, error) {
 	return result, nil
 }
 
-func (u *unsignedTransaction) pointer() C.UnsignedTransactionPtr {
+func (u *UnsignedTransaction) pointer() C.UnsignedTransactionPtr {
 	return u.p
 }
 
@@ -392,38 +358,18 @@ func finalizeUnsignedTransaction(p C.UnsignedTransactionPtr) {
 // of the script.
 // Transactions are not encrypted, so it is possible to browse and view every transaction ever
 // collected into a block.
-type Transaction interface {
-	// TxId returns TxId for this Transaction
-	TxId() TxId
-	// Inputs returns Inputs for this Transaction
-	Inputs() Inputs
-	// DataInputs returns DataInputs for this Transaction
-	DataInputs() DataInputs
-	// OutputCandidates returns BoxCandidates for this Transaction
-	OutputCandidates() BoxCandidates
-	// Outputs returns Boxes for this Transaction
-	Outputs() Boxes
-	// Json returns json representation of Transaction as string (compatible with Ergo Node/Explorer API, numbers are encoded as numbers)
-	Json() (string, error)
-	// JsonEIP12 returns json representation of Transaction as string according to EIP-12 https://github.com/ergoplatform/eips/pull/23
-	JsonEIP12() (string, error)
-	// Validate validates the current Transaction
-	Validate(stateContext StateContext, boxesToSpent Boxes, dataBoxes Boxes) error
-	pointer() C.TransactionPtr
-}
-
-type transaction struct {
+type Transaction struct {
 	p C.TransactionPtr
 }
 
-func newTransaction(t *transaction) Transaction {
+func newTransaction(t *Transaction) *Transaction {
 	runtime.AddCleanup(t, finalizeTransaction, t.p)
 	return t
 }
 
 // NewTransaction creates Transaction from UnsignedTransaction and an array of proofs in the same order as
 // UnsignedTransaction inputs with empty proof indicated with empty ByteArray
-func NewTransaction(unsignedTx UnsignedTransaction, proofs ByteArrays) (Transaction, error) {
+func NewTransaction(unsignedTx *UnsignedTransaction, proofs *ByteArrays) (*Transaction, error) {
 	var p C.TransactionPtr
 
 	errPtr := C.ergo_lib_tx_from_unsigned_tx(unsignedTx.pointer(), proofs.pointer(), &p)
@@ -435,12 +381,12 @@ func NewTransaction(unsignedTx UnsignedTransaction, proofs ByteArrays) (Transact
 		return nil, err.error()
 	}
 
-	t := &transaction{p: p}
+	t := &Transaction{p: p}
 	return newTransaction(t), nil
 }
 
 // NewTransactionFromJson parse Transaction from JSON. Supports Ergo Node/Explorer API and box values and token amount encoded as strings.
-func NewTransactionFromJson(json string) (Transaction, error) {
+func NewTransactionFromJson(json string) (*Transaction, error) {
 	txJsonStr := C.CString(json)
 	defer C.free(unsafe.Pointer(txJsonStr))
 
@@ -453,51 +399,57 @@ func NewTransactionFromJson(json string) (Transaction, error) {
 		return nil, err.error()
 	}
 
-	t := &transaction{p: p}
+	t := &Transaction{p: p}
 	return newTransaction(t), nil
 }
 
-func (t *transaction) TxId() TxId {
+// TxId returns TxId for this Transaction
+func (t *Transaction) TxId() *TxId {
 	var p C.TxIdPtr
 	C.ergo_lib_tx_id(t.p, &p)
 	runtime.KeepAlive(t)
-	ti := &txId{p: p}
+	ti := &TxId{p: p}
 	return newTxId(ti)
 }
 
-func (t *transaction) Inputs() Inputs {
+// Inputs returns Inputs for this Transaction
+func (t *Transaction) Inputs() *Inputs {
 	var p C.InputsPtr
 	C.ergo_lib_tx_inputs(t.p, &p)
 	runtime.KeepAlive(t)
-	i := &inputs{p: p}
+	i := &Inputs{p: p}
 	return newInputs(i)
 }
 
-func (t *transaction) DataInputs() DataInputs {
+// DataInputs returns DataInputs for this Transaction
+func (t *Transaction) DataInputs() *DataInputs {
 	var p C.DataInputsPtr
 	C.ergo_lib_tx_data_inputs(t.p, &p)
 	runtime.KeepAlive(t)
-	di := &dataInputs{p: p}
+	di := &DataInputs{p: p}
 	return newDataInputs(di)
 }
 
-func (t *transaction) OutputCandidates() BoxCandidates {
+// OutputCandidates returns BoxCandidates for this Transaction
+func (t *Transaction) OutputCandidates() *BoxCandidates {
 	var p C.ErgoBoxCandidatesPtr
 	C.ergo_lib_tx_output_candidates(t.p, &p)
 	runtime.KeepAlive(t)
-	bc := &boxCandidates{p: p}
+	bc := &BoxCandidates{p: p}
 	return newBoxCandidates(bc)
 }
 
-func (t *transaction) Outputs() Boxes {
+// Outputs returns Boxes for this Transaction
+func (t *Transaction) Outputs() *Boxes {
 	var p C.ErgoBoxesPtr
 	C.ergo_lib_tx_outputs(t.p, &p)
 	runtime.KeepAlive(t)
-	b := &boxes{p: p}
+	b := &Boxes{p: p}
 	return newBoxes(b)
 }
 
-func (t *transaction) Json() (string, error) {
+// Json returns json representation of Transaction as string (compatible with Ergo Node/Explorer API, numbers are encoded as numbers)
+func (t *Transaction) Json() (string, error) {
 	var outStr *C.char
 
 	errPtr := C.ergo_lib_tx_to_json(t.p, &outStr)
@@ -514,7 +466,8 @@ func (t *transaction) Json() (string, error) {
 	return result, nil
 }
 
-func (t *transaction) JsonEIP12() (string, error) {
+// JsonEIP12 returns json representation of Transaction as string according to EIP-12 https://github.com/ergoplatform/eips/pull/23
+func (t *Transaction) JsonEIP12() (string, error) {
 	var outStr *C.char
 
 	errPtr := C.ergo_lib_tx_to_json_eip12(t.p, &outStr)
@@ -531,7 +484,8 @@ func (t *transaction) JsonEIP12() (string, error) {
 	return result, nil
 }
 
-func (t *transaction) Validate(stateContext StateContext, boxesToSpent Boxes, dataBoxes Boxes) error {
+// Validate validates the current Transaction
+func (t *Transaction) Validate(stateContext *StateContext, boxesToSpent *Boxes, dataBoxes *Boxes) error {
 	errPtr := C.ergo_lib_tx_validate(t.p, stateContext.pointer(), boxesToSpent.pointer(), dataBoxes.pointer())
 	runtime.KeepAlive(t)
 	runtime.KeepAlive(dataBoxes)
@@ -544,7 +498,7 @@ func (t *transaction) Validate(stateContext StateContext, boxesToSpent Boxes, da
 	return nil
 }
 
-func (t *transaction) pointer() C.TransactionPtr {
+func (t *Transaction) pointer() C.TransactionPtr {
 	return t.p
 }
 

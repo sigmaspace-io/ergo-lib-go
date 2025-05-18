@@ -10,20 +10,16 @@ import (
 	"unsafe"
 )
 
-type ByteArray interface {
-	pointer() C.ByteArrayPtr
-}
-
-type byteArray struct {
+type ByteArray struct {
 	p C.ByteArrayPtr
 }
 
-func newByteArray(b *byteArray) ByteArray {
+func newByteArray(b *ByteArray) *ByteArray {
 	runtime.AddCleanup(b, finalizeByteArray, b.p)
 	return b
 }
 
-func NewByteArray(bytes []byte) (ByteArray, error) {
+func NewByteArray(bytes []byte) (*ByteArray, error) {
 	var p C.ByteArrayPtr
 	byteData := C.CBytes(bytes)
 	defer C.free(unsafe.Pointer(byteData))
@@ -35,11 +31,11 @@ func NewByteArray(bytes []byte) (ByteArray, error) {
 		return nil, err.error()
 	}
 
-	ba := &byteArray{p: p}
+	ba := &ByteArray{p: p}
 	return newByteArray(ba), nil
 }
 
-func (b *byteArray) pointer() C.ByteArrayPtr {
+func (b *ByteArray) pointer() C.ByteArrayPtr {
 	return b.p
 }
 
@@ -47,36 +43,28 @@ func finalizeByteArray(p C.ByteArrayPtr) {
 	C.ergo_lib_byte_array_delete(p)
 }
 
-type ByteArrays interface {
-	Len() int
-	Get(index int) (ByteArray, error)
-	Add(byteArray ByteArray)
-	All() iter.Seq2[int, ByteArray]
-	pointer() C.ByteArraysPtr
-}
-
-type byteArrays struct {
+type ByteArrays struct {
 	p C.ByteArraysPtr
 }
 
-func newByteArrays(b *byteArrays) ByteArrays {
+func newByteArrays(b *ByteArrays) *ByteArrays {
 	runtime.AddCleanup(b, finalizeByteArrays, b.p)
 	return b
 }
 
-func NewByteArrays() ByteArrays {
+func NewByteArrays() *ByteArrays {
 	var p C.ByteArraysPtr
 	C.ergo_lib_byte_arrays_new(&p)
-	ba := &byteArrays{p: p}
+	ba := &ByteArrays{p: p}
 	return newByteArrays(ba)
 }
 
-func (b *byteArrays) Len() int {
+func (b *ByteArrays) Len() int {
 	res := C.ergo_lib_byte_arrays_len(b.p)
 	return int(res)
 }
 
-func (b *byteArrays) Get(index int) (ByteArray, error) {
+func (b *ByteArrays) Get(index int) (*ByteArray, error) {
 	var p C.ByteArrayPtr
 
 	res := C.ergo_lib_byte_arrays_get(b.p, C.uintptr_t(index), &p)
@@ -86,19 +74,19 @@ func (b *byteArrays) Get(index int) (ByteArray, error) {
 	}
 
 	if res.is_some {
-		ba := &byteArray{p: p}
+		ba := &ByteArray{p: p}
 		return newByteArray(ba), nil
 	}
 
 	return nil, nil
 }
 
-func (b *byteArrays) Add(byteArray ByteArray) {
+func (b *ByteArrays) Add(byteArray *ByteArray) {
 	C.ergo_lib_byte_arrays_add(byteArray.pointer(), b.p)
 }
 
-func (b *byteArrays) All() iter.Seq2[int, ByteArray] {
-	return func(yield func(int, ByteArray) bool) {
+func (b *ByteArrays) All() iter.Seq2[int, *ByteArray] {
+	return func(yield func(int, *ByteArray) bool) {
 		for i := 0; i < b.Len(); i++ {
 			tk, err := b.Get(i)
 			if err != nil {
@@ -111,7 +99,7 @@ func (b *byteArrays) All() iter.Seq2[int, ByteArray] {
 	}
 }
 
-func (b *byteArrays) pointer() C.ByteArraysPtr {
+func (b *ByteArrays) pointer() C.ByteArraysPtr {
 	return b.p
 }
 

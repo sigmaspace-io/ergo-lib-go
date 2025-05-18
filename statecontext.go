@@ -7,23 +7,17 @@ import "C"
 import "runtime"
 
 // StateContext represents blockchain state (last headers, etc.)
-type StateContext interface {
-	// Equals checks if provided StateContext is same
-	Equals(stateContext StateContext) bool
-	pointer() C.ErgoStateContextPtr
-}
-
-type stateContext struct {
+type StateContext struct {
 	p C.ErgoStateContextPtr
 }
 
-func newStateContext(s *stateContext) StateContext {
+func newStateContext(s *StateContext) *StateContext {
 	runtime.AddCleanup(s, finalizeStateContext, s.p)
 	return s
 }
 
 // NewStateContext creates StateContext from PreHeader and BlockHeaders
-func NewStateContext(preHeader PreHeader, headers BlockHeaders, parameters Parameters) (StateContext, error) {
+func NewStateContext(preHeader *PreHeader, headers *BlockHeaders, parameters *Parameters) (*StateContext, error) {
 	var p C.ErgoStateContextPtr
 
 	errPtr := C.ergo_lib_ergo_state_context_new(preHeader.pointer(), headers.pointer(), parameters.pointer(), &p)
@@ -36,19 +30,20 @@ func NewStateContext(preHeader PreHeader, headers BlockHeaders, parameters Param
 		return nil, err.error()
 	}
 
-	st := &stateContext{p: p}
+	st := &StateContext{p: p}
 
 	return newStateContext(st), nil
 }
 
-func (s *stateContext) Equals(stateContext StateContext) bool {
+// Equals checks if provided StateContext is same
+func (s *StateContext) Equals(stateContext *StateContext) bool {
 	res := C.ergo_lib_ergo_state_context_eq(s.p, stateContext.pointer())
 	runtime.KeepAlive(s)
 	runtime.KeepAlive(stateContext)
 	return bool(res)
 }
 
-func (s *stateContext) pointer() C.ErgoStateContextPtr {
+func (s *StateContext) pointer() C.ErgoStateContextPtr {
 	return s.p
 }
 

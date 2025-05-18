@@ -11,38 +11,25 @@ import (
 )
 
 // ContextExtension represent user-defined variables to be put into context
-type ContextExtension interface {
-	// Keys returns iterator over all keys in the ContextExtension
-	Keys() iter.Seq[uint8]
-	// Get returns Constant at provided key or nil if it doesn't exist
-	Get(key uint8) (Constant, error)
-	// Set adds Constant at provided key
-	Set(key uint8, constant Constant)
-	// All returns iterator over all key,value pairs in the ContextExtension
-	All() iter.Seq2[uint8, Constant]
-	// Values returns iterator over all Constant in the ContextExtension
-	Values() iter.Seq[Constant]
-	pointer() C.ContextExtensionPtr
-}
-
-type contextExtension struct {
+type ContextExtension struct {
 	p C.ContextExtensionPtr
 }
 
-func newContextExtension(c *contextExtension) ContextExtension {
+func newContextExtension(c *ContextExtension) *ContextExtension {
 	runtime.AddCleanup(c, finalizeContextExtension, c.p)
 	return c
 }
 
 // NewContextExtension creates new empty ContextExtension instance
-func NewContextExtension() ContextExtension {
+func NewContextExtension() *ContextExtension {
 	var p C.ContextExtensionPtr
 	C.ergo_lib_context_extension_empty(&p)
-	c := &contextExtension{p: p}
+	c := &ContextExtension{p: p}
 	return newContextExtension(c)
 }
 
-func (c *contextExtension) Keys() iter.Seq[uint8] {
+// Keys returns iterator over all keys in the ContextExtension
+func (c *ContextExtension) Keys() iter.Seq[uint8] {
 	bytesLength := C.ergo_lib_context_extension_len(c.p)
 
 	output := C.malloc(C.uintptr_t(bytesLength))
@@ -62,7 +49,8 @@ func (c *contextExtension) Keys() iter.Seq[uint8] {
 	}
 }
 
-func (c *contextExtension) Get(key uint8) (Constant, error) {
+// Get returns Constant at provided key or nil if it doesn't exist
+func (c *ContextExtension) Get(key uint8) (*Constant, error) {
 	var p C.ConstantPtr
 
 	res := C.ergo_lib_context_extension_get(c.p, C.uint8_t(key), &p)
@@ -73,21 +61,23 @@ func (c *contextExtension) Get(key uint8) (Constant, error) {
 	}
 
 	if res.is_some {
-		co := &constant{p: p}
+		co := &Constant{p: p}
 		return newConstant(co), nil
 	}
 
 	return nil, nil
 }
 
-func (c *contextExtension) Set(key uint8, constant Constant) {
+// Set adds Constant at provided key
+func (c *ContextExtension) Set(key uint8, constant *Constant) {
 	C.ergo_lib_context_extension_set_pair(constant.pointer(), C.uint8_t(key), c.p)
 	runtime.KeepAlive(c)
 	runtime.KeepAlive(constant)
 }
 
-func (c *contextExtension) All() iter.Seq2[uint8, Constant] {
-	return func(yield func(uint8, Constant) bool) {
+// All returns iterator over all key,value pairs in the ContextExtension
+func (c *ContextExtension) All() iter.Seq2[uint8, *Constant] {
+	return func(yield func(uint8, *Constant) bool) {
 		for key := range c.Keys() {
 			ce, err := c.Get(key)
 			if err != nil {
@@ -101,8 +91,9 @@ func (c *contextExtension) All() iter.Seq2[uint8, Constant] {
 	}
 }
 
-func (c *contextExtension) Values() iter.Seq[Constant] {
-	return func(yield func(Constant) bool) {
+// Values returns iterator over all Constant in the ContextExtension
+func (c *ContextExtension) Values() iter.Seq[*Constant] {
+	return func(yield func(*Constant) bool) {
 		for key := range c.Keys() {
 			ce, err := c.Get(key)
 			if err != nil {
@@ -116,7 +107,7 @@ func (c *contextExtension) Values() iter.Seq[Constant] {
 	}
 }
 
-func (c *contextExtension) pointer() C.ContextExtensionPtr {
+func (c *ContextExtension) pointer() C.ContextExtensionPtr {
 	return c.p
 }
 

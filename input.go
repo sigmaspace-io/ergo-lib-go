@@ -11,44 +11,38 @@ import (
 )
 
 // UnsignedInput used in construction of UnsignedTransactions
-type UnsignedInput interface {
-	// BoxId returns the BoxId of the UnsignedInput
-	BoxId() BoxId
-	// ContextExtension returns the ContextExtension of the UnsignedInput
-	ContextExtension() ContextExtension
-	pointer() C.UnsignedInputPtr
-}
-
-type unsignedInput struct {
+type UnsignedInput struct {
 	p C.UnsignedInputPtr
 }
 
-func newUnsignedInput(u *unsignedInput) UnsignedInput {
+func newUnsignedInput(u *UnsignedInput) *UnsignedInput {
 	runtime.AddCleanup(u, finalizeUnsignedInput, u.p)
 	return u
 }
 
-func (u *unsignedInput) BoxId() BoxId {
+// BoxId returns the BoxId of the UnsignedInput
+func (u *UnsignedInput) BoxId() *BoxId {
 	var p C.BoxIdPtr
 
 	C.ergo_lib_unsigned_input_box_id(u.p, &p)
 
-	bi := &boxId{p: p}
+	bi := &BoxId{p: p}
 
 	return newBoxId(bi)
 }
 
-func (u *unsignedInput) ContextExtension() ContextExtension {
+// ContextExtension returns the ContextExtension of the UnsignedInput
+func (u *UnsignedInput) ContextExtension() *ContextExtension {
 	var p C.ContextExtensionPtr
 
 	C.ergo_lib_unsigned_input_context_extension(u.p, &p)
 
-	ce := &contextExtension{p: p}
+	ce := &ContextExtension{p: p}
 
 	return newContextExtension(ce)
 }
 
-func (u *unsignedInput) pointer() C.UnsignedInputPtr {
+func (u *UnsignedInput) pointer() C.UnsignedInputPtr {
 	return u.p
 }
 
@@ -56,45 +50,39 @@ func finalizeUnsignedInput(p C.UnsignedInputPtr) {
 	C.ergo_lib_unsigned_input_delete(p)
 }
 
-// Input represents signed inputs in signed transaction
-type Input interface {
-	// BoxId returns BoxId of Input
-	BoxId() BoxId
-	// SpendingProof returns spending proof of Input as ProverResult
-	SpendingProof() ProverResult
-	pointer() C.InputPtr
-}
-
-type input struct {
+// Input represents signed Inputs in signed Transaction
+type Input struct {
 	p C.InputPtr
 }
 
-func newInput(i *input) Input {
+func newInput(i *Input) *Input {
 	runtime.AddCleanup(i, finalizeInput, i.p)
 	return i
 }
 
-func (i *input) BoxId() BoxId {
+// BoxId returns BoxId of Input
+func (i *Input) BoxId() *BoxId {
 	var p C.BoxIdPtr
 
 	C.ergo_lib_input_box_id(i.p, &p)
 
-	bi := &boxId{p: p}
+	bi := &BoxId{p: p}
 
 	return newBoxId(bi)
 }
 
-func (i *input) SpendingProof() ProverResult {
+// SpendingProof returns spending proof of Input as ProverResult
+func (i *Input) SpendingProof() *ProverResult {
 	var p C.ProverResultPtr
 
 	C.ergo_lib_input_spending_proof(i.p, &p)
 
-	pr := &proverResult{p: p}
+	pr := &ProverResult{p: p}
 
 	return newProverResult(pr)
 }
 
-func (i *input) pointer() C.InputPtr {
+func (i *Input) pointer() C.InputPtr {
 	return i.p
 }
 
@@ -103,25 +91,17 @@ func finalizeInput(p C.InputPtr) {
 }
 
 // ProverResult represents proof of correctness of tx spending
-type ProverResult interface {
-	// Bytes returns proof bytes
-	Bytes() []byte
-	// ContextExtension returns ContextExtension of ProverResult
-	ContextExtension() ContextExtension
-	// Json representation as text (compatible with Ergo Node/Explorer API, numbers are encoded as numbers)
-	Json() (string, error)
-}
-
-type proverResult struct {
+type ProverResult struct {
 	p C.ProverResultPtr
 }
 
-func newProverResult(pr *proverResult) ProverResult {
+func newProverResult(pr *ProverResult) *ProverResult {
 	runtime.AddCleanup(pr, finalizeProverResult, pr.p)
 	return pr
 }
 
-func (pr *proverResult) Bytes() []byte {
+// Bytes returns proof bytes
+func (pr *ProverResult) Bytes() []byte {
 	proofLength := C.ergo_lib_prover_result_proof_len(pr.p)
 
 	output := C.malloc(C.uintptr_t(proofLength))
@@ -134,17 +114,19 @@ func (pr *proverResult) Bytes() []byte {
 	return result
 }
 
-func (pr *proverResult) ContextExtension() ContextExtension {
+// ContextExtension returns ContextExtension of ProverResult
+func (pr *ProverResult) ContextExtension() *ContextExtension {
 	var p C.ContextExtensionPtr
 
 	C.ergo_lib_prover_result_context_extension(pr.p, &p)
 
-	ce := &contextExtension{p: p}
+	ce := &ContextExtension{p: p}
 
 	return newContextExtension(ce)
 }
 
-func (pr *proverResult) Json() (string, error) {
+// Json representation as text (compatible with Ergo Node/Explorer API, numbers are encoded as numbers)
+func (pr *ProverResult) Json() (string, error) {
 	var outStr *C.char
 
 	errPtr := C.ergo_lib_prover_result_to_json(pr.p, &outStr)
@@ -165,42 +147,33 @@ func finalizeProverResult(p C.ProverResultPtr) {
 }
 
 // UnsignedInputs an ordered collection of UnsignedInput
-type UnsignedInputs interface {
-	// Len returns the length of the collection
-	Len() int
-	// Get returns the UnsignedInput at the provided index if it exists
-	Get(index int) (UnsignedInput, error)
-	// Add adds provided UnsignedInput to the end of the collection
-	Add(unsignedInput UnsignedInput)
-	// All returns an iterator over all UnsignedInput inside the collection
-	All() iter.Seq2[int, UnsignedInput]
-}
-
-type unsignedInputs struct {
+type UnsignedInputs struct {
 	p C.UnsignedInputsPtr
 }
 
-func newUnsignedInputs(u *unsignedInputs) UnsignedInputs {
+func newUnsignedInputs(u *UnsignedInputs) *UnsignedInputs {
 	runtime.AddCleanup(u, finalizeUnsignedInputs, u.p)
 	return u
 }
 
 // NewUnsignedInputs creates an empty UnsignedInputs collection
-func NewUnsignedInputs() UnsignedInputs {
+func NewUnsignedInputs() *UnsignedInputs {
 	var p C.UnsignedInputsPtr
 	C.ergo_lib_unsigned_inputs_new(&p)
 
-	u := &unsignedInputs{p: p}
+	u := &UnsignedInputs{p: p}
 
 	return newUnsignedInputs(u)
 }
 
-func (u *unsignedInputs) Len() int {
+// Len returns the length of the collection
+func (u *UnsignedInputs) Len() int {
 	res := C.ergo_lib_unsigned_inputs_len(u.p)
 	return int(res)
 }
 
-func (u *unsignedInputs) Get(index int) (UnsignedInput, error) {
+// Get returns the UnsignedInput at the provided index if it exists
+func (u *UnsignedInputs) Get(index int) (*UnsignedInput, error) {
 	var p C.UnsignedInputPtr
 
 	res := C.ergo_lib_unsigned_inputs_get(u.p, C.uintptr_t(index), &p)
@@ -210,19 +183,21 @@ func (u *unsignedInputs) Get(index int) (UnsignedInput, error) {
 	}
 
 	if res.is_some {
-		ui := &unsignedInput{p: p}
+		ui := &UnsignedInput{p: p}
 		return newUnsignedInput(ui), nil
 	}
 
 	return nil, nil
 }
 
-func (u *unsignedInputs) Add(unsignedInput UnsignedInput) {
+// Add adds provided UnsignedInput to the end of the collection
+func (u *UnsignedInputs) Add(unsignedInput *UnsignedInput) {
 	C.ergo_lib_unsigned_inputs_add(unsignedInput.pointer(), u.p)
 }
 
-func (u *unsignedInputs) All() iter.Seq2[int, UnsignedInput] {
-	return func(yield func(int, UnsignedInput) bool) {
+// All returns an iterator over all UnsignedInput inside the collection
+func (u *UnsignedInputs) All() iter.Seq2[int, *UnsignedInput] {
+	return func(yield func(int, *UnsignedInput) bool) {
 		for i := 0; i < u.Len(); i++ {
 			tk, err := u.Get(i)
 			if err != nil {
@@ -240,42 +215,33 @@ func finalizeUnsignedInputs(p C.UnsignedInputsPtr) {
 }
 
 // Inputs an ordered collection of Input
-type Inputs interface {
-	// Len returns the length of the collection
-	Len() int
-	// Get returns the Input at the provided index if it exists
-	Get(index int) (Input, error)
-	// Add adds provided Input to the end of the collection
-	Add(input Input)
-	// All returns an iterator over all Input inside the collection
-	All() iter.Seq2[int, Input]
-}
-
-type inputs struct {
+type Inputs struct {
 	p C.InputsPtr
 }
 
-func newInputs(i *inputs) Inputs {
+func newInputs(i *Inputs) *Inputs {
 	runtime.AddCleanup(i, finalizeInputs, i.p)
 	return i
 }
 
 // NewInputs creates an empty Inputs collection
-func NewInputs() Inputs {
+func NewInputs() *Inputs {
 	var p C.InputsPtr
 	C.ergo_lib_inputs_new(&p)
 
-	i := &inputs{p: p}
+	i := &Inputs{p: p}
 
 	return newInputs(i)
 }
 
-func (i *inputs) Len() int {
+// Len returns the length of the collection
+func (i *Inputs) Len() int {
 	res := C.ergo_lib_inputs_len(i.p)
 	return int(res)
 }
 
-func (i *inputs) Get(index int) (Input, error) {
+// Get returns the Input at the provided index if it exists
+func (i *Inputs) Get(index int) (*Input, error) {
 	var p C.InputPtr
 
 	res := C.ergo_lib_inputs_get(i.p, C.uintptr_t(index), &p)
@@ -285,19 +251,21 @@ func (i *inputs) Get(index int) (Input, error) {
 	}
 
 	if res.is_some {
-		in := &input{p: p}
+		in := &Input{p: p}
 		return newInput(in), nil
 	}
 
 	return nil, nil
 }
 
-func (i *inputs) Add(input Input) {
+// Add adds provided Input to the end of the collection
+func (i *Inputs) Add(input *Input) {
 	C.ergo_lib_inputs_add(input.pointer(), i.p)
 }
 
-func (i *inputs) All() iter.Seq2[int, Input] {
-	return func(yield func(int, Input) bool) {
+// All returns an iterator over all Input inside the collection
+func (i *Inputs) All() iter.Seq2[int, *Input] {
+	return func(yield func(int, *Input) bool) {
 		for j := 0; j < i.Len(); j++ {
 			tk, err := i.Get(j)
 			if err != nil {

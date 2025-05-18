@@ -9,28 +9,17 @@ import (
 	"unsafe"
 )
 
-type NipopowProof interface {
-	// IsBetterThan implementation of the ≥ algorithm from KMZ17, see Algorithm 4
-	// https://fc20.ifca.ai/preproceedings/74.pdf
-	IsBetterThan(otherProof NipopowProof) (bool, error)
-	// SuffixHead returns suffix head
-	SuffixHead() PoPowHeader
-	// Json returns json representation of NipopowProof as text
-	Json() (string, error)
-	pointer() C.NipopowProofPtr
-}
-
-type nipopowProof struct {
+type NipopowProof struct {
 	p C.NipopowProofPtr
 }
 
-func newNipopowProof(p *nipopowProof) NipopowProof {
+func newNipopowProof(p *NipopowProof) *NipopowProof {
 	runtime.AddCleanup(p, finalizeNipopowProof, p.p)
 	return p
 }
 
 // NewNipopowProof parse NipopowProof from JSON
-func NewNipopowProof(json string) (NipopowProof, error) {
+func NewNipopowProof(json string) (*NipopowProof, error) {
 	nipopowProofJsonStr := C.CString(json)
 	defer C.free(unsafe.Pointer(nipopowProofJsonStr))
 
@@ -42,12 +31,14 @@ func NewNipopowProof(json string) (NipopowProof, error) {
 		return nil, err.error()
 	}
 
-	n := &nipopowProof{p: p}
+	n := &NipopowProof{p: p}
 
 	return newNipopowProof(n), nil
 }
 
-func (p *nipopowProof) IsBetterThan(otherProof NipopowProof) (bool, error) {
+// IsBetterThan implementation of the ≥ algorithm from KMZ17, see Algorithm 4
+// https://fc20.ifca.ai/preproceedings/74.pdf
+func (p *NipopowProof) IsBetterThan(otherProof *NipopowProof) (bool, error) {
 	res := C.ergo_lib_nipopow_proof_is_better_than(p.p, otherProof.pointer())
 	runtime.KeepAlive(p)
 	runtime.KeepAlive(otherProof)
@@ -58,15 +49,17 @@ func (p *nipopowProof) IsBetterThan(otherProof NipopowProof) (bool, error) {
 	return bool(res.value), nil
 }
 
-func (p *nipopowProof) SuffixHead() PoPowHeader {
+// SuffixHead returns suffix head
+func (p *NipopowProof) SuffixHead() *PoPowHeader {
 	var ptr C.PoPowHeaderPtr
 	C.ergo_lib_nipopow_proof_suffix_head(p.p, &ptr)
 	runtime.KeepAlive(p)
-	pp := &poPowHeader{p: ptr}
+	pp := &PoPowHeader{p: ptr}
 	return newPoPowHeader(pp)
 }
 
-func (p *nipopowProof) Json() (string, error) {
+// Json returns json representation of NipopowProof as text
+func (p *NipopowProof) Json() (string, error) {
 	var outStr *C.char
 
 	errPtr := C.ergo_lib_nipopow_proof_to_json(p.p, &outStr)
@@ -83,7 +76,7 @@ func (p *nipopowProof) Json() (string, error) {
 	return result, nil
 }
 
-func (p *nipopowProof) pointer() C.NipopowProofPtr {
+func (p *NipopowProof) pointer() C.NipopowProofPtr {
 	return p.p
 }
 
@@ -93,50 +86,44 @@ func finalizeNipopowProof(p C.NipopowProofPtr) {
 
 // NipopowVerifier a verifier for PoPow proofs. During its lifetime, it processes many proofs with the aim of
 // deducing at any given point what is the best (sub)chain rooted at the specified genesis
-type NipopowVerifier interface {
-	// BestProof returns the best NipopowProof
-	BestProof() NipopowProof
-	// BestChain returns chain of BlockHeaders from the best proof
-	BestChain() BlockHeaders
-	// Process given NipopowProof
-	Process(newProof NipopowProof) error
-}
-
-type nipopowVerifier struct {
+type NipopowVerifier struct {
 	p C.NipopowVerifierPtr
 }
 
-func newNipopowVerifier(n *nipopowVerifier) NipopowVerifier {
+func newNipopowVerifier(n *NipopowVerifier) *NipopowVerifier {
 	runtime.AddCleanup(n, finalizeNipopowVerifier, n.p)
 	return n
 }
 
 // NewNipopowVerifier creates a new NipopowVerifier
-func NewNipopowVerifier(genesisBlockId BlockId) NipopowVerifier {
+func NewNipopowVerifier(genesisBlockId *BlockId) *NipopowVerifier {
 	var p C.NipopowVerifierPtr
 	C.ergo_lib_nipopow_verifier_new(genesisBlockId.pointer(), &p)
 	runtime.KeepAlive(genesisBlockId)
-	np := &nipopowVerifier{p: p}
+	np := &NipopowVerifier{p: p}
 	return newNipopowVerifier(np)
 }
 
-func (n *nipopowVerifier) BestProof() NipopowProof {
+// BestProof returns the best NipopowProof
+func (n *NipopowVerifier) BestProof() *NipopowProof {
 	var p C.NipopowProofPtr
 	C.ergo_lib_nipopow_verifier_best_proof(n.p, &p)
 	runtime.KeepAlive(n)
-	np := &nipopowProof{p: p}
+	np := &NipopowProof{p: p}
 	return newNipopowProof(np)
 }
 
-func (n *nipopowVerifier) BestChain() BlockHeaders {
+// BestChain returns chain of BlockHeaders from the best proof
+func (n *NipopowVerifier) BestChain() *BlockHeaders {
 	var p C.BlockHeadersPtr
 	C.ergo_lib_nipopow_verifier_best_chain(n.p, &p)
 	runtime.KeepAlive(n)
-	bh := &blockHeaders{p: p}
+	bh := &BlockHeaders{p: p}
 	return newBlockHeaders(bh)
 }
 
-func (n *nipopowVerifier) Process(newProof NipopowProof) error {
+// Process given NipopowProof
+func (n *NipopowVerifier) Process(newProof *NipopowProof) error {
 	errPtr := C.ergo_lib_nipopow_verifier_process(n.p, newProof.pointer())
 	runtime.KeepAlive(n)
 	runtime.KeepAlive(newProof)
@@ -151,33 +138,17 @@ func finalizeNipopowVerifier(p C.NipopowVerifierPtr) {
 	C.ergo_lib_nipopow_verifier_delete(p)
 }
 
-type PoPowHeader interface {
-	// Header returns BlockHeader of PoPowHeader
-	Header() (BlockHeader, error)
-	// Interlinks returns BlockIds of PoPowHeader
-	Interlinks() (BlockIds, error)
-	// InterlinksProof returns BatchMerkleProof of PoPowHeader
-	InterlinksProof() (BatchMerkleProof, error)
-	// CheckInterlinksProof checks interlinks proof
-	CheckInterlinksProof() bool
-	// Json returns json representation of PoPowHeader as string
-	Json() (string, error)
-	// Equals checks if provided PoPowHeader is same
-	Equals(poPowHeader PoPowHeader) bool
-	pointer() C.PoPowHeaderPtr
-}
-
-type poPowHeader struct {
+type PoPowHeader struct {
 	p C.PoPowHeaderPtr
 }
 
-func newPoPowHeader(p *poPowHeader) PoPowHeader {
+func newPoPowHeader(p *PoPowHeader) *PoPowHeader {
 	runtime.AddCleanup(p, finalizePoPowHeader, p.p)
 	return p
 }
 
 // NewPoPowHeader parses PoPowHeader from json string
-func NewPoPowHeader(json string) (PoPowHeader, error) {
+func NewPoPowHeader(json string) (*PoPowHeader, error) {
 	poPowHeaderJsonStr := C.CString(json)
 	defer C.free(unsafe.Pointer(poPowHeaderJsonStr))
 
@@ -189,12 +160,13 @@ func NewPoPowHeader(json string) (PoPowHeader, error) {
 		return nil, err.error()
 	}
 
-	n := &poPowHeader{p: p}
+	n := &PoPowHeader{p: p}
 
 	return newPoPowHeader(n), nil
 }
 
-func (p *poPowHeader) Header() (BlockHeader, error) {
+// Header returns BlockHeader of PoPowHeader
+func (p *PoPowHeader) Header() (*BlockHeader, error) {
 	var ptr C.BlockHeaderPtr
 	errPtr := C.ergo_lib_popow_header_get_header(p.p, &ptr)
 	runtime.KeepAlive(p)
@@ -202,11 +174,12 @@ func (p *poPowHeader) Header() (BlockHeader, error) {
 	if err.isError() {
 		return nil, err.error()
 	}
-	bh := &blockHeader{p: ptr}
+	bh := &BlockHeader{p: ptr}
 	return newBlockHeader(bh), nil
 }
 
-func (p *poPowHeader) Interlinks() (BlockIds, error) {
+// Interlinks returns BlockIds of PoPowHeader
+func (p *PoPowHeader) Interlinks() (*BlockIds, error) {
 	var ptr C.BlockIdsPtr
 	errPtr := C.ergo_lib_popow_header_get_interlinks(p.p, &ptr)
 	runtime.KeepAlive(p)
@@ -214,11 +187,12 @@ func (p *poPowHeader) Interlinks() (BlockIds, error) {
 	if err.isError() {
 		return nil, err.error()
 	}
-	bi := &blockIds{p: ptr}
+	bi := &BlockIds{p: ptr}
 	return newBlockIds(bi), nil
 }
 
-func (p *poPowHeader) InterlinksProof() (BatchMerkleProof, error) {
+// InterlinksProof returns BatchMerkleProof of PoPowHeader
+func (p *PoPowHeader) InterlinksProof() (*BatchMerkleProof, error) {
 	var ptr C.BatchMerkleProofPtr
 	errPtr := C.ergo_lib_popow_header_get_interlinks_proof(p.p, &ptr)
 	runtime.KeepAlive(p)
@@ -226,17 +200,19 @@ func (p *poPowHeader) InterlinksProof() (BatchMerkleProof, error) {
 	if err.isError() {
 		return nil, err.error()
 	}
-	b := &batchMerkleProof{p: ptr}
+	b := &BatchMerkleProof{p: ptr}
 	return newBatchMerkleProof(b), nil
 }
 
-func (p *poPowHeader) CheckInterlinksProof() bool {
+// CheckInterlinksProof checks interlinks proof
+func (p *PoPowHeader) CheckInterlinksProof() bool {
 	res := C.ergo_lib_popow_header_check_interlinks_proof(p.p)
 	runtime.KeepAlive(p)
 	return bool(res)
 }
 
-func (p *poPowHeader) Json() (string, error) {
+// Json returns json representation of PoPowHeader as string
+func (p *PoPowHeader) Json() (string, error) {
 	var outStr *C.char
 
 	errPtr := C.ergo_lib_popow_header_to_json(p.p, &outStr)
@@ -253,14 +229,15 @@ func (p *poPowHeader) Json() (string, error) {
 	return result, nil
 }
 
-func (p *poPowHeader) Equals(poPowHeader PoPowHeader) bool {
+// Equals checks if provided PoPowHeader is same
+func (p *PoPowHeader) Equals(poPowHeader *PoPowHeader) bool {
 	res := C.ergo_lib_po_pow_header_eq(p.p, poPowHeader.pointer())
 	runtime.KeepAlive(p)
 	runtime.KeepAlive(poPowHeader)
 	return bool(res)
 }
 
-func (p *poPowHeader) pointer() C.PoPowHeaderPtr {
+func (p *PoPowHeader) pointer() C.PoPowHeaderPtr {
 	return p.p
 }
 

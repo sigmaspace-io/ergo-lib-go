@@ -9,37 +9,29 @@ import (
 	"unsafe"
 )
 
-// Contract defines the contract(script) that will be guarding box contents
-type Contract interface {
-	// Tree returns the ergo Tree of the Contract
-	Tree() Tree
-	// Equals checks if provided Contract is same
-	Equals(contract Contract) bool
-	pointer() C.ContractPtr
-}
-
-type contract struct {
+// Contract defines the Contract(script) that will be guarding Box contents
+type Contract struct {
 	p C.ContractPtr
 }
 
-func newContract(c *contract) Contract {
+func newContract(c *Contract) *Contract {
 	runtime.AddCleanup(c, finalizeContract, c.p)
 	return c
 }
 
 // NewContractFromTree creates a new Contract from ergo Tree
-func NewContractFromTree(ergoTree Tree) Contract {
+func NewContractFromTree(ergoTree *Tree) *Contract {
 	var p C.ContractPtr
 	C.ergo_lib_contract_new(ergoTree.pointer(), &p)
 	runtime.KeepAlive(ergoTree)
 
-	c := &contract{p: p}
+	c := &Contract{p: p}
 
 	return newContract(c)
 }
 
-// NewContractCompileFromString compiles a contract from ErgoScript source code
-func NewContractCompileFromString(compileFromString string) (Contract, error) {
+// NewContractCompileFromString compiles a Contract from ErgoScript source code
+func NewContractCompileFromString(compileFromString string) (*Contract, error) {
 	contractStr := C.CString(compileFromString)
 	defer C.free(unsafe.Pointer(contractStr))
 
@@ -50,13 +42,13 @@ func NewContractCompileFromString(compileFromString string) (Contract, error) {
 		return nil, err.error()
 	}
 
-	c := &contract{p: p}
+	c := &Contract{p: p}
 
 	return newContract(c), nil
 }
 
-// NewContractPayToAddress creates a new Contract that allows spending of the guarded box by a given recipient (Address)
-func NewContractPayToAddress(payToAddress Address) (Contract, error) {
+// NewContractPayToAddress creates a new Contract that allows spending of the guarded Box by a given recipient (Address)
+func NewContractPayToAddress(payToAddress *Address) (*Contract, error) {
 	var p C.ContractPtr
 	errPtr := C.ergo_lib_contract_pay_to_address(payToAddress.pointer(), &p)
 	runtime.KeepAlive(payToAddress)
@@ -65,29 +57,31 @@ func NewContractPayToAddress(payToAddress Address) (Contract, error) {
 		return nil, err.error()
 	}
 
-	c := &contract{p: p}
+	c := &Contract{p: p}
 
 	return newContract(c), nil
 }
 
-func (c *contract) Tree() Tree {
+// Tree returns the ergo Tree of the Contract
+func (c *Contract) Tree() *Tree {
 	var ergoTreePtr C.ErgoTreePtr
 	C.ergo_lib_contract_ergo_tree(c.p, &ergoTreePtr)
 	runtime.KeepAlive(c)
 
-	newErgoTree := &tree{p: ergoTreePtr}
+	newErgoTree := &Tree{p: ergoTreePtr}
 
 	return newTree(newErgoTree)
 }
 
-func (c *contract) Equals(contract Contract) bool {
+// Equals checks if provided Contract is same
+func (c *Contract) Equals(contract *Contract) bool {
 	res := C.ergo_lib_contract_eq(c.p, contract.pointer())
 	runtime.KeepAlive(c)
 	runtime.KeepAlive(contract)
 	return bool(res)
 }
 
-func (c *contract) pointer() C.ContractPtr {
+func (c *Contract) pointer() C.ContractPtr {
 	return c.p
 }
 

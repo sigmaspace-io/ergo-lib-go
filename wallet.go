@@ -10,19 +10,12 @@ import (
 )
 
 // MnemonicGenerator generates new mnemonic seed phrases
-type MnemonicGenerator interface {
-	// Generate a new mnemonic sentence using random entropy
-	Generate() (string, error)
-	// GenerateFromEntropy generates a new mnemonic sentence using provided entropy
-	GenerateFromEntropy(entropy []byte) (string, error)
-}
-
-type mnemonicGenerator struct {
+type MnemonicGenerator struct {
 	p C.MnemonicGeneratorPtr
 }
 
 // NewMnemonicGenerator creates a new MnemonicGenerator based on supplied language and strength
-func NewMnemonicGenerator(language string, strength uint32) (MnemonicGenerator, error) {
+func NewMnemonicGenerator(language string, strength uint32) (*MnemonicGenerator, error) {
 	languageStr := C.CString(language)
 	defer C.free(unsafe.Pointer(languageStr))
 
@@ -35,13 +28,14 @@ func NewMnemonicGenerator(language string, strength uint32) (MnemonicGenerator, 
 		return nil, err.error()
 	}
 
-	m := &mnemonicGenerator{p: p}
+	m := &MnemonicGenerator{p: p}
 	runtime.AddCleanup(m, finalizeMnemonicGenerator, m.p)
 
 	return m, nil
 }
 
-func (m *mnemonicGenerator) Generate() (string, error) {
+// Generate a new mnemonic sentence using random entropy
+func (m *MnemonicGenerator) Generate() (string, error) {
 	var returnStr C.ReturnString
 
 	returnStr = C.ergo_lib_mnemonic_generator_generate(m.p)
@@ -57,7 +51,8 @@ func (m *mnemonicGenerator) Generate() (string, error) {
 	return mnemonic, nil
 }
 
-func (m *mnemonicGenerator) GenerateFromEntropy(entropy []byte) (string, error) {
+// GenerateFromEntropy generates a new mnemonic sentence using provided entropy
+func (m *MnemonicGenerator) GenerateFromEntropy(entropy []byte) (string, error) {
 	var returnStr C.ReturnString
 
 	byteData := C.CBytes(entropy)
@@ -80,36 +75,17 @@ func finalizeMnemonicGenerator(p C.MnemonicGeneratorPtr) {
 	C.free(unsafe.Pointer(p))
 }
 
-type Wallet interface {
-	// AddSecret adds a secret to the wallets prover
-	AddSecret(secret SecretKey) error
-	// SignTransaction signs a transaction
-	SignTransaction(stateContext StateContext, unsignedTx UnsignedTransaction, boxesToSpend Boxes, dataBoxes Boxes) (Transaction, error)
-	// SignTransactionMulti signs a multi signature transaction
-	SignTransactionMulti(stateContext StateContext, unsignedTx UnsignedTransaction, boxesToSpend Boxes, dataBoxes Boxes, txHints TransactionHintsBag) (Transaction, error)
-	// SignReducedTransaction signs a reduced transaction (generating proofs for inputs)
-	SignReducedTransaction(reducedTx ReducedTransaction) (Transaction, error)
-	// SignReducedTransactionMulti signs a multi signature reduced transaction
-	SignReducedTransactionMulti(reducedTx ReducedTransaction, txHints TransactionHintsBag) (Transaction, error)
-	// GenerateCommitments generates Commitments for unsigned tx
-	GenerateCommitments(stateContext StateContext, unsignedTx UnsignedTransaction, boxesToSpend Boxes, dataBoxes Boxes) (TransactionHintsBag, error)
-	// GenerateCommitmentsForReducedTransaction generates Commitments for reduced transaction
-	GenerateCommitmentsForReducedTransaction(reducedTx ReducedTransaction) (TransactionHintsBag, error)
-	// SignMessageUsingP2PK signs an arbitrary message using a P2PK address
-	SignMessageUsingP2PK(address Address, message []byte) (SignedMessage, error)
-}
-
-type wallet struct {
+type Wallet struct {
 	p C.WalletPtr
 }
 
-func newWallet(w *wallet) Wallet {
+func newWallet(w *Wallet) *Wallet {
 	runtime.AddCleanup(w, finalizeWallet, w.p)
 	return w
 }
 
 // NewWallet creates a Wallet instance loading secret key from mnemonic or throws error if a DlogSecretKey cannot be parsed from the provided phrase
-func NewWallet(mnemonicPhrase string, mnemonicPassword string) (Wallet, error) {
+func NewWallet(mnemonicPhrase string, mnemonicPassword string) (*Wallet, error) {
 	mnemonic := C.CString(mnemonicPhrase)
 	defer C.free(unsafe.Pointer(mnemonic))
 	password := C.CString(mnemonicPassword)
@@ -124,20 +100,21 @@ func NewWallet(mnemonicPhrase string, mnemonicPassword string) (Wallet, error) {
 		return nil, err.error()
 	}
 
-	w := &wallet{p: p}
+	w := &Wallet{p: p}
 
 	return newWallet(w), nil
 }
 
 // NewWalletFromSecretKeys creates a Wallet from secrets
-func NewWalletFromSecretKeys(secrets SecretKeys) Wallet {
+func NewWalletFromSecretKeys(secrets *SecretKeys) *Wallet {
 	var p C.WalletPtr
 	C.ergo_lib_wallet_from_secrets(secrets.pointer(), &p)
-	w := &wallet{p: p}
+	w := &Wallet{p: p}
 	return newWallet(w)
 }
 
-func (w *wallet) AddSecret(secret SecretKey) error {
+// AddSecret adds a secret to the wallets prover
+func (w *Wallet) AddSecret(secret *SecretKey) error {
 	errPtr := C.ergo_lib_wallet_add_secret(w.p, secret.pointer())
 	runtime.KeepAlive(w)
 	err := newError(errPtr)
@@ -147,7 +124,8 @@ func (w *wallet) AddSecret(secret SecretKey) error {
 	return nil
 }
 
-func (w *wallet) SignTransaction(stateContext StateContext, unsignedTx UnsignedTransaction, boxesToSpend Boxes, dataBoxes Boxes) (Transaction, error) {
+// SignTransaction signs a Transaction
+func (w *Wallet) SignTransaction(stateContext *StateContext, unsignedTx *UnsignedTransaction, boxesToSpend *Boxes, dataBoxes *Boxes) (*Transaction, error) {
 	var p C.TransactionPtr
 	errPtr := C.ergo_lib_wallet_sign_transaction(w.p, stateContext.pointer(), unsignedTx.pointer(), boxesToSpend.pointer(), dataBoxes.pointer(), &p)
 	runtime.KeepAlive(stateContext)
@@ -159,11 +137,12 @@ func (w *wallet) SignTransaction(stateContext StateContext, unsignedTx UnsignedT
 	if err.isError() {
 		return nil, err.error()
 	}
-	t := &transaction{p: p}
+	t := &Transaction{p: p}
 	return newTransaction(t), nil
 }
 
-func (w *wallet) SignTransactionMulti(stateContext StateContext, unsignedTx UnsignedTransaction, boxesToSpend Boxes, dataBoxes Boxes, txHints TransactionHintsBag) (Transaction, error) {
+// SignTransactionMulti signs a multi signature Transaction
+func (w *Wallet) SignTransactionMulti(stateContext *StateContext, unsignedTx *UnsignedTransaction, boxesToSpend *Boxes, dataBoxes *Boxes, txHints *TransactionHintsBag) (*Transaction, error) {
 	var p C.TransactionPtr
 	errPtr := C.ergo_lib_wallet_sign_transaction_multi(w.p, stateContext.pointer(), unsignedTx.pointer(), boxesToSpend.pointer(), dataBoxes.pointer(), txHints.pointer(), &p)
 	runtime.KeepAlive(w)
@@ -176,11 +155,12 @@ func (w *wallet) SignTransactionMulti(stateContext StateContext, unsignedTx Unsi
 	if err.isError() {
 		return nil, err.error()
 	}
-	t := &transaction{p: p}
+	t := &Transaction{p: p}
 	return newTransaction(t), nil
 }
 
-func (w *wallet) SignReducedTransaction(reducedTx ReducedTransaction) (Transaction, error) {
+// SignReducedTransaction signs a reduced Transaction (generating proofs for Inputs)
+func (w *Wallet) SignReducedTransaction(reducedTx *ReducedTransaction) (*Transaction, error) {
 	var p C.TransactionPtr
 	errPtr := C.ergo_lib_wallet_sign_reduced_transaction(w.p, reducedTx.pointer(), &p)
 	runtime.KeepAlive(w)
@@ -189,11 +169,12 @@ func (w *wallet) SignReducedTransaction(reducedTx ReducedTransaction) (Transacti
 	if err.isError() {
 		return nil, err.error()
 	}
-	t := &transaction{p: p}
+	t := &Transaction{p: p}
 	return newTransaction(t), nil
 }
 
-func (w *wallet) SignReducedTransactionMulti(reducedTx ReducedTransaction, txHints TransactionHintsBag) (Transaction, error) {
+// SignReducedTransactionMulti signs a multi signature reduced Transaction
+func (w *Wallet) SignReducedTransactionMulti(reducedTx *ReducedTransaction, txHints *TransactionHintsBag) (*Transaction, error) {
 	var p C.TransactionPtr
 	errPtr := C.ergo_lib_wallet_sign_reduced_transaction_multi(w.p, reducedTx.pointer(), txHints.pointer(), &p)
 	runtime.KeepAlive(w)
@@ -203,11 +184,12 @@ func (w *wallet) SignReducedTransactionMulti(reducedTx ReducedTransaction, txHin
 	if err.isError() {
 		return nil, err.error()
 	}
-	t := &transaction{p: p}
+	t := &Transaction{p: p}
 	return newTransaction(t), nil
 }
 
-func (w *wallet) GenerateCommitments(stateContext StateContext, unsignedTx UnsignedTransaction, boxesToSpend Boxes, dataBoxes Boxes) (TransactionHintsBag, error) {
+// GenerateCommitments generates Commitments for unsigned tx
+func (w *Wallet) GenerateCommitments(stateContext *StateContext, unsignedTx *UnsignedTransaction, boxesToSpend *Boxes, dataBoxes *Boxes) (*TransactionHintsBag, error) {
 	var p C.TransactionHintsBagPtr
 	errPtr := C.ergo_lib_wallet_generate_commitments(w.p, stateContext.pointer(), unsignedTx.pointer(), boxesToSpend.pointer(), dataBoxes.pointer(), &p)
 	runtime.KeepAlive(w)
@@ -219,11 +201,12 @@ func (w *wallet) GenerateCommitments(stateContext StateContext, unsignedTx Unsig
 	if err.isError() {
 		return nil, err.error()
 	}
-	th := &transactionHintsBag{p: p}
+	th := &TransactionHintsBag{p: p}
 	return newTransactionHintsBag(th), nil
 }
 
-func (w *wallet) GenerateCommitmentsForReducedTransaction(reducedTx ReducedTransaction) (TransactionHintsBag, error) {
+// GenerateCommitmentsForReducedTransaction generates Commitments for reduced Transaction
+func (w *Wallet) GenerateCommitmentsForReducedTransaction(reducedTx *ReducedTransaction) (*TransactionHintsBag, error) {
 	var p C.TransactionHintsBagPtr
 	errPtr := C.ergo_lib_wallet_generate_commitments_for_reduced_transaction(w.p, reducedTx.pointer(), &p)
 	runtime.KeepAlive(w)
@@ -232,11 +215,12 @@ func (w *wallet) GenerateCommitmentsForReducedTransaction(reducedTx ReducedTrans
 	if err.isError() {
 		return nil, err.error()
 	}
-	th := &transactionHintsBag{p: p}
+	th := &TransactionHintsBag{p: p}
 	return newTransactionHintsBag(th), nil
 }
 
-func (w *wallet) SignMessageUsingP2PK(address Address, message []byte) (SignedMessage, error) {
+// SignMessageUsingP2PK signs an arbitrary message using a P2PK Address
+func (w *Wallet) SignMessageUsingP2PK(address *Address, message []byte) (*SignedMessage, error) {
 	byteData := C.CBytes(message)
 	defer C.free(unsafe.Pointer(byteData))
 
@@ -248,7 +232,7 @@ func (w *wallet) SignMessageUsingP2PK(address Address, message []byte) (SignedMe
 	if err.isError() {
 		return nil, err.error()
 	}
-	sm := &signedMessage{p: p}
+	sm := &SignedMessage{p: p}
 	return newSignedMessage(sm), nil
 }
 
@@ -256,20 +240,16 @@ func finalizeWallet(p C.WalletPtr) {
 	C.ergo_lib_wallet_delete(p)
 }
 
-type SignedMessage interface {
-	pointer() C.SignedMessagePtr
-}
-
-type signedMessage struct {
+type SignedMessage struct {
 	p C.SignedMessagePtr
 }
 
-func newSignedMessage(s *signedMessage) SignedMessage {
+func newSignedMessage(s *SignedMessage) *SignedMessage {
 	runtime.AddCleanup(s, finalizeSignedMessage, s.p)
 	return s
 }
 
-func (s *signedMessage) pointer() C.SignedMessagePtr {
+func (s *SignedMessage) pointer() C.SignedMessagePtr {
 	return s.p
 }
 

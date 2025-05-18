@@ -10,7 +10,7 @@ import (
 )
 
 // VerifySignature verifies that the signature is presented to satisfy SigmaProp conditions
-func VerifySignature(address Address, message []byte, signature SignedMessage) (bool, error) {
+func VerifySignature(address *Address, message []byte, signature *SignedMessage) (bool, error) {
 	byteData := C.CBytes(message)
 	defer C.free(unsafe.Pointer(byteData))
 

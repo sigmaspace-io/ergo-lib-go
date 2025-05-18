@@ -12,34 +12,26 @@ import (
 )
 
 // SecretKey represents secret key for the prover
-type SecretKey interface {
-	// Address returns address of the SecretKey
-	Address() Address
-	// Bytes returns SecretKey encoded to bytes
-	Bytes() []byte
-	pointer() C.SecretKeyPtr
-}
-
-type secretKey struct {
+type SecretKey struct {
 	p C.SecretKeyPtr
 }
 
-func newSecretKey(s *secretKey) SecretKey {
+func newSecretKey(s *SecretKey) *SecretKey {
 	runtime.AddCleanup(s, finalizeSecretKey, s.p)
 	return s
 }
 
 // NewSecretKey generates new random SecretKey
-func NewSecretKey() SecretKey {
+func NewSecretKey() *SecretKey {
 	var p C.SecretKeyPtr
 	C.ergo_lib_secret_key_generate_random(&p)
-	s := &secretKey{p: p}
+	s := &SecretKey{p: p}
 	return newSecretKey(s)
 }
 
 // NewSecretKeyFromBytes parses dlog secret key from bytes (SEC-1-encoded scalar)
 // provided secret key bytes must be of length 32
-func NewSecretKeyFromBytes(bytes []byte) (SecretKey, error) {
+func NewSecretKeyFromBytes(bytes []byte) (*SecretKey, error) {
 	if len(bytes) != 32 {
 		return nil, errors.New("secret key size must be 32 bytes")
 	}
@@ -55,19 +47,21 @@ func NewSecretKeyFromBytes(bytes []byte) (SecretKey, error) {
 		return nil, err.error()
 	}
 
-	s := &secretKey{p: p}
+	s := &SecretKey{p: p}
 	return newSecretKey(s), nil
 }
 
-func (s *secretKey) Address() Address {
+// Address returns Address of the SecretKey
+func (s *SecretKey) Address() *Address {
 	var p C.AddressPtr
 	C.ergo_lib_secret_key_get_address(s.p, &p)
 	runtime.KeepAlive(s)
-	a := &address{p}
+	a := &Address{p}
 	return newAddress(a)
 }
 
-func (s *secretKey) Bytes() []byte {
+// Bytes returns SecretKey encoded to bytes
+func (s *SecretKey) Bytes() []byte {
 	bytes := C.malloc(C.uintptr_t(32))
 	C.ergo_lib_secret_key_to_bytes(s.p, (*C.uint8_t)(bytes))
 	defer C.free(unsafe.Pointer(bytes))
@@ -76,7 +70,7 @@ func (s *secretKey) Bytes() []byte {
 	return result
 }
 
-func (s *secretKey) pointer() C.SecretKeyPtr {
+func (s *SecretKey) pointer() C.SecretKeyPtr {
 	return s.p
 }
 
@@ -85,42 +79,32 @@ func finalizeSecretKey(p C.SecretKeyPtr) {
 }
 
 // SecretKeys an ordered collection of SecretKey
-type SecretKeys interface {
-	// Len returns the length of the collection
-	Len() int
-	// Get returns the SecretKey at the provided index if it exists
-	Get(index int) (SecretKey, error)
-	// Add adds provided SecretKey to the end of the collection
-	Add(secretKey SecretKey)
-	// All returns an iterator over all SecretKey inside the collection
-	All() iter.Seq2[int, SecretKey]
-	pointer() C.SecretKeysPtr
-}
-
-type secretKeys struct {
+type SecretKeys struct {
 	p C.SecretKeysPtr
 }
 
-func newSecretKeys(s *secretKeys) SecretKeys {
+func newSecretKeys(s *SecretKeys) *SecretKeys {
 	runtime.AddCleanup(s, finalizeSecretKeys, s.p)
 	return s
 }
 
 // NewSecretKeys creates an empty SecretKeys collection
-func NewSecretKeys() SecretKeys {
+func NewSecretKeys() *SecretKeys {
 	var p C.SecretKeysPtr
 	C.ergo_lib_secret_keys_new(&p)
-	s := &secretKeys{p: p}
+	s := &SecretKeys{p: p}
 	return newSecretKeys(s)
 }
 
-func (s *secretKeys) Len() int {
+// Len returns the length of the collection
+func (s *SecretKeys) Len() int {
 	res := C.ergo_lib_secret_keys_len(s.p)
 	runtime.KeepAlive(s)
 	return int(res)
 }
 
-func (s *secretKeys) Get(index int) (SecretKey, error) {
+// Get returns the SecretKey at the provided index if it exists
+func (s *SecretKeys) Get(index int) (*SecretKey, error) {
 	var p C.SecretKeyPtr
 
 	res := C.ergo_lib_secret_keys_get(s.p, C.uintptr_t(index), &p)
@@ -131,21 +115,23 @@ func (s *secretKeys) Get(index int) (SecretKey, error) {
 	}
 
 	if res.is_some {
-		sk := &secretKey{p: p}
+		sk := &SecretKey{p: p}
 		return newSecretKey(sk), nil
 	}
 
 	return nil, nil
 }
 
-func (s *secretKeys) Add(secretKey SecretKey) {
+// Add adds provided SecretKey to the end of the collection
+func (s *SecretKeys) Add(secretKey *SecretKey) {
 	C.ergo_lib_secret_keys_add(secretKey.pointer(), s.p)
 	runtime.KeepAlive(s)
 	runtime.KeepAlive(secretKey)
 }
 
-func (s *secretKeys) All() iter.Seq2[int, SecretKey] {
-	return func(yield func(int, SecretKey) bool) {
+// All returns an iterator over all SecretKey inside the collection
+func (s *SecretKeys) All() iter.Seq2[int, *SecretKey] {
+	return func(yield func(int, *SecretKey) bool) {
 		for i := 0; i < s.Len(); i++ {
 			tk, err := s.Get(i)
 			if err != nil {
@@ -159,7 +145,7 @@ func (s *secretKeys) All() iter.Seq2[int, SecretKey] {
 	}
 }
 
-func (s *secretKeys) pointer() C.SecretKeysPtr {
+func (s *SecretKeys) pointer() C.SecretKeysPtr {
 	return s.p
 }
 
